@@ -24,3 +24,11 @@ dist-ssr
 *.sw?
 
 .vercel
+
+# Vite cache
+.vite
+
+# Environment files
+.env
+.env.*
+!.env.example
