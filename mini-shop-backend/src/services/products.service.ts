@@ -44,7 +44,7 @@ export const createProduct = async (data: CreateProductData) => {
 	 });
 };
 
-export const getAllProducts = async () => {
+export const getAllProducts = async (): Promise<ProductData[]> => {
 	try {
 		return await prisma.product.findMany({
 			orderBy: {
@@ -60,7 +60,7 @@ export const getAllProducts = async () => {
 export const getAllCategories = async () => {
 	const products = await getAllProducts();
 
-	const uniqueCategories = [...new Set(products.map((product) => product.category))]
+	const uniqueCategories = [...new Set(products.map((product: ProductData) => product.category))]
 
 	return uniqueCategories;
 }
