@@ -12,9 +12,8 @@ export interface Product {
 
 const productsOnPage = 8;
 const searchDebounceMs = 500;
-const productionApiUrl = 'https://mini-shop-backend-wxq7.onrender.com';
 
-const apiBaseUrl = import.meta.env.DEV ? '/api' : (import.meta.env.VITE_API_URL || productionApiUrl);
+const apiBaseUrl = '/api';
 
 const useProducts = () => {
 	const [products, setProducts] = useState<Product[]>([]);
