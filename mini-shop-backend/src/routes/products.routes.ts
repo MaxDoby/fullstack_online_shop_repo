@@ -7,14 +7,15 @@ import {
 	deleteProductController,
 	getAllCategoriesController 
 } from '../controllers/products.controller';
+import { validateCreateProduct, validateUpdateProduct } from '../middleware/products.validation';
 
 const router = Router();
 
-router.post('/', createProductController);
+router.post('/', validateCreateProduct, createProductController);
 router.get('/', getAllProductsController);
 router.get('/categories', getAllCategoriesController);
 router.get('/:id', getProductByIdController);
-router.put('/:id', updateProductController);
+router.put('/:id', validateUpdateProduct, updateProductController);
 router.delete('/:id', deleteProductController);
 
 export default router;
