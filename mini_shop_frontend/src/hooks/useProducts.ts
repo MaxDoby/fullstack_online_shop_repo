@@ -42,8 +42,9 @@ const useProducts = () => {
 
 				setAllProducts(data);
 
-				const uniqueCategories = [...new Set(data.map((product) => product.category))];
-				setCategories(['Toate', ...uniqueCategories]);
+				const uniqueCategories = await fetch(`${apiBaseUrl}/products/categories`);
+				const categoriesData: string[] = await uniqueCategories.json();
+				setCategories(['Toate', ...categoriesData]);
 			} catch (error) {
 				console.error('Fetch Error:', error);
 			}
