@@ -15,7 +15,7 @@ const ProductsOnPage = ({ productsToShow, addToCart, setSelectedImage }: Product
 					<img src={product.thumbnail} alt={product.title} className="product-image" />
 				</button>
 				<h3>{product.title}</h3>
-				<p className="category">{product.category}</p>
+				<p className="category">{product.category.name}</p>
 				<div
 					className="price-row"
 					style={{

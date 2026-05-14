@@ -1,0 +1,194 @@
+[
+  {
+    "title": "Apple MacBook Pro 14 Inch Space Grey",
+    "description": "Laptop premium pentru lucru serios, editare si productivitate de zi cu zi.",
+    "price": 1999.99,
+    "stock": 24,
+    "category": "Laptops",
+    "thumbnail": "/images/products/apple-macbook-pro-14-inch-space-grey.webp"
+  },
+  {
+    "title": "Asus Zenbook Pro Dual Screen Laptop",
+    "description": "Laptop modern cu doua ecrane, potrivit pentru multitasking si creatie.",
+    "price": 1799.99,
+    "stock": 45,
+    "category": "Laptops",
+    "thumbnail": "/images/products/asus-zenbook-pro-dual-screen-laptop.webp"
+  },
+  {
+    "title": "Huawei Matebook X Pro",
+    "description": "Laptop subtire si elegant, bun pentru birou, studiu si lucru mobil.",
+    "price": 1399.99,
+    "stock": 75,
+    "category": "Laptops",
+    "thumbnail": "/images/products/huawei-matebook-x-pro.webp"
+  },
+  {
+    "title": "Lenovo Yoga 920",
+    "description": "Laptop convertibil, practic pentru prezentari, navigare si lucru flexibil.",
+    "price": 1099.99,
+    "stock": 40,
+    "category": "Laptops",
+    "thumbnail": "/images/products/lenovo-yoga-920.webp"
+  },
+  {
+    "title": "New DELL XPS 13 9300 Laptop",
+    "description": "Laptop compact cu aspect premium, potrivit pentru munca si utilizare zilnica.",
+    "price": 1499.99,
+    "stock": 74,
+    "category": "Laptops",
+    "thumbnail": "/images/products/new-dell-xps-13-9300-laptop.webp"
+  },
+  {
+    "title": "iPhone 5s",
+    "description": "Telefon compact si simplu, potrivit pentru utilizare de baza si apeluri.",
+    "price": 199.99,
+    "stock": 25,
+    "category": "Phones",
+    "thumbnail": "/images/products/iphone-5s.webp"
+  },
+  {
+    "title": "iPhone 6",
+    "description": "Telefon elegant si usor de folosit, bun pentru sarcini zilnice.",
+    "price": 299.99,
+    "stock": 60,
+    "category": "Phones",
+    "thumbnail": "/images/products/iphone-6.webp"
+  },
+  {
+    "title": "iPhone 13 Pro",
+    "description": "Telefon performant cu camera buna si experienta rapida in utilizare.",
+    "price": 1099.99,
+    "stock": 56,
+    "category": "Phones",
+    "thumbnail": "/images/products/iphone-13-pro.webp"
+  },
+  {
+    "title": "iPhone X",
+    "description": "Telefon modern cu ecran placut si design premium pentru utilizare zilnica.",
+    "price": 899.99,
+    "stock": 37,
+    "category": "Phones",
+    "thumbnail": "/images/products/iphone-x.webp"
+  },
+  {
+    "title": "Oppo A57",
+    "description": "Telefon accesibil si practic pentru comunicare, retele sociale si multimedia.",
+    "price": 249.99,
+    "stock": 19,
+    "category": "Phones",
+    "thumbnail": "/images/products/oppo-a57.webp"
+  },
+  {
+    "title": "Samsung Galaxy S7",
+    "description": "Telefon clasic Samsung, potrivit pentru uz zilnic si aplicatii uzuale.",
+    "price": 299.99,
+    "stock": 67,
+    "category": "Phones",
+    "thumbnail": "/images/products/samsung-galaxy-s7.webp"
+  },
+  {
+    "title": "Samsung Galaxy S10",
+    "description": "Telefon puternic cu design modern si performanta buna in sarcini variate.",
+    "price": 699.99,
+    "stock": 19,
+    "category": "Phones",
+    "thumbnail": "/images/products/samsung-galaxy-s10.webp"
+  },
+  {
+    "title": "Apple Airpods",
+    "description": "Casti wireless usoare si comode pentru muzica, apeluri si utilizare zilnica.",
+    "price": 129.99,
+    "stock": 67,
+    "category": "Audio",
+    "thumbnail": "/images/products/apple-airpods.webp"
+  },
+  {
+    "title": "Apple AirPods Max Silver",
+    "description": "Casti premium over-ear cu sunet clar si design elegant pentru audio de calitate.",
+    "price": 549.99,
+    "stock": 59,
+    "category": "Audio",
+    "thumbnail": "/images/products/apple-airpods-max-silver.webp"
+  },
+  {
+    "title": "Apple Airpower Wireless Charger",
+    "description": "Incarcator wireless util pentru alimentare rapida si spatiu de lucru curat.",
+    "price": 79.99,
+    "stock": 1,
+    "category": "Accessories",
+    "thumbnail": "/images/products/apple-airpower-wireless-charger.webp"
+  },
+  {
+    "title": "Apple HomePod Mini Cosmic Grey",
+    "description": "Boxa inteligenta compacta, buna pentru muzica si comenzi rapide in casa.",
+    "price": 99.99,
+    "stock": 27,
+    "category": "Audio",
+    "thumbnail": "/images/products/apple-homepod-mini-cosmic-grey.webp"
+  },
+  {
+    "title": "Apple iPhone Charger",
+    "description": "Incarcator simplu si practic pentru alimentarea zilnica a telefonului.",
+    "price": 19.99,
+    "stock": 31,
+    "category": "Accessories",
+    "thumbnail": "/images/products/apple-iphone-charger.webp"
+  },
+  {
+    "title": "Apple Watch Series 4 Gold",
+    "description": "Ceas inteligent elegant pentru notificari, activitate si utilizare de zi cu zi.",
+    "price": 349.99,
+    "stock": 33,
+    "category": "Accessories",
+    "thumbnail": "/images/products/apple-watch-series-4-gold.webp"
+  },
+  {
+    "title": "Beats Flex Wireless Earphones",
+    "description": "Casti wireless comode, potrivite pentru muzica, plimbari si apeluri.",
+    "price": 49.99,
+    "stock": 50,
+    "category": "Audio",
+    "thumbnail": "/images/products/beats-flex-wireless-earphones.webp"
+  },
+  {
+    "title": "iPhone 12 Silicone Case with MagSafe Plum",
+    "description": "Husa practica pentru telefon, utila pentru protectie si utilizare zilnica.",
+    "price": 29.99,
+    "stock": 69,
+    "category": "Accessories",
+    "thumbnail": "/images/products/iphone-12-silicone-case-with-magsafe-plum.webp"
+  },
+  {
+    "title": "iPad Mini 2021 Starlight",
+    "description": "Tableta compacta si eleganta pentru citit, video si lucru usor in miscare.",
+    "price": 499.99,
+    "stock": 47,
+    "category": "Tablets",
+    "thumbnail": "/images/products/ipad-mini-2021-starlight.webp"
+  },
+  {
+    "title": "Samsung Galaxy Tab S8 Plus Grey",
+    "description": "Tableta puternica cu ecran mare, buna pentru multimedia si productivitate.",
+    "price": 599.99,
+    "stock": 62,
+    "category": "Tablets",
+    "thumbnail": "/images/products/samsung-galaxy-tab-s8-plus-grey.webp"
+  },
+  {
+    "title": "Samsung Galaxy Tab White",
+    "description": "Tableta simpla si practica pentru navigare, filme si aplicatii de zi cu zi.",
+    "price": 349.99,
+    "stock": 92,
+    "category": "Tablets",
+    "thumbnail": "/images/products/samsung-galaxy-tab-white.webp"
+  },
+  {
+    "title": "Amazon Echo Plus",
+    "description": "Boxa inteligenta utila pentru muzica, control vocal si automatizari simple.",
+    "price": 99.99,
+    "stock": 61,
+    "category": "Audio",
+    "thumbnail": "/images/products/amazon-echo-plus.webp"
+  }
+]

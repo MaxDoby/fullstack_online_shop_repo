@@ -17,7 +17,6 @@ import useProducts from './hooks/useProducts.ts';
 import useCart from './hooks/useCart.ts';
 
 import logicFilterProducts from './utils/productFilters.ts';
-import calculatePagination from './utils/pagination.ts';
 
 const App = () => {
 	const navigate = useNavigate();
@@ -36,8 +35,7 @@ const App = () => {
 		selectedImage,
 		setSelectedImage,
 		setActiveCategory,
-		totalProducts,
-		productsOnPage,
+		totalPages,
 	} = productsState;
 
 	const {
@@ -91,8 +89,6 @@ const App = () => {
 		await registerLocal(username, password, email, firstName, lastName);
 		navigate('/products');
 	};
-
-	const { totalPages } = calculatePagination(totalProducts, productsOnPage);
 
 	const productsPageFilters = {
 		categories,

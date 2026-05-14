@@ -6,8 +6,19 @@ export interface Product {
 	description: string;
 	price: number;
 	stock: number;
-	category: string;
+	category: {
+		id: number;
+		name: string;
+	};
 	thumbnail: string;
+}
+
+interface ProductsResponse {
+    items: Product[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
 }
 
 const productsOnPage = 8;
@@ -17,14 +28,13 @@ const apiBaseUrl = '/api';
 
 const useProducts = () => {
 	const [products, setProducts] = useState<Product[]>([]);
-	const [allProducts, setAllProducts] = useState<Product[]>([]);
 	const [categories, setCategories] = useState<string[]>([]);
 	const [searchQuery, setSearchQuery] = useState<string>('');
 	const [debouncedSearchQuery, setDebouncedSearchQuery] = useState<string>('');
 	const [currentPage, setCurrentPage] = useState<number>(1);
 	const [selectedImage, setSelectedImage] = useState<string | null>(null);
 	const [activeCategory, setActiveCategory] = useState<string>('Toate');
-	const [totalProducts, setTotalProducts] = useState<number>(0);
+	const [totalPages, setTotalPages] = useState<number>(1);
 
 	useEffect(() => {
 		const timeoutId = setTimeout(() => {
@@ -35,14 +45,9 @@ const useProducts = () => {
 	}, [searchQuery]);
 
 	useEffect(() => {
-		const loadProducts = async () => {
+		const loadCategories = async () => {
 			try {
-				const response = await fetch(`${apiBaseUrl}/products`);
-				const data: Product[] = await response.json();
-
-				setAllProducts(data);
-
-				const uniqueCategories = await fetch(`${apiBaseUrl}/products/categories`);
+				const uniqueCategories = await fetch(`${apiBaseUrl}/categories`);
 				const categoriesData: string[] = await uniqueCategories.json();
 				setCategories(['Toate', ...categoriesData]);
 			} catch (error) {
@@ -50,27 +55,28 @@ const useProducts = () => {
 			}
 		};
 
-		loadProducts();
+		loadCategories();
 	}, []);
 
 	useEffect(() => {
-		const trimmedSearch = debouncedSearchQuery.trim().toLowerCase();
+		const loadProducts = async () => {
+			const params = new URLSearchParams();
+			params.set('page', String(currentPage));
+			params.set('limit', String(productsOnPage));
 
-		const filteredProducts = allProducts.filter((product) => {
-			const matchesCategory = activeCategory === 'Toate' || product.category === activeCategory;
-			const matchesSearch = !trimmedSearch
-				|| product.title.toLowerCase().includes(trimmedSearch)
-				|| product.description.toLowerCase().includes(trimmedSearch);
+			if (debouncedSearchQuery) {
+				params.set('search', debouncedSearchQuery);
+			}
 
-			return matchesCategory && matchesSearch;
-		});
-		setTotalProducts(filteredProducts.length);
+			if (activeCategory !== 'Toate') params.set('category', activeCategory);
+			const response = await fetch(`${apiBaseUrl}/products?${params.toString()}`);
+			const data: ProductsResponse = await response.json();
 
-		const skip = (currentPage - 1) * productsOnPage;
-		const paginatedProducts = filteredProducts.slice(skip, skip + productsOnPage);
-
-		setProducts(paginatedProducts);
-	}, [allProducts, currentPage, activeCategory, debouncedSearchQuery]);
+			setProducts(data.items);
+			setTotalPages(data.totalPages);
+		};
+		loadProducts();
+	}, [currentPage, activeCategory, debouncedSearchQuery]);
 
 	return {
 		products,
@@ -83,8 +89,7 @@ const useProducts = () => {
 		setSelectedImage,
 		activeCategory,
 		setActiveCategory,
-		totalProducts,
-		productsOnPage,
+		totalPages,
 	};
 };
 

@@ -1,14 +1,15 @@
 # TechFlow Mini Shop
 
-Mini online shop built as a fullstack learning project. The frontend is a React + Vite app, and the backend is an Express + TypeScript REST API connected to PostgreSQL through Prisma.
+Mini online shop built as a fullstack learning project. The frontend is a React + Vite app, and the current backend is a NestJS REST API connected to PostgreSQL through Prisma.
 
 ## Features
 
 - Product catalog loaded from the backend API
-- Product categories, search, and pagination
+- Product categories, search, sorting, and pagination handled by the backend
 - Cart with add, remove, quantity update, and checkout simulation
 - Login/register page
 - Backend CRUD endpoints for products
+- Separate categories module with Prisma relation between products and categories
 - PostgreSQL database with Prisma migrations and seed data
 - Local PostgreSQL setup through Docker Compose
 
@@ -22,25 +23,24 @@ Frontend:
 
 Backend:
 - Node.js
-- Express
+- NestJS
 - TypeScript
 - Prisma ORM
 - PostgreSQL
 - Docker Compose for local database setup
 
 Other tools:
-- cors for cross-origin request handling
 - dotenv for environment variables
-- ts-node-dev for backend development mode
 - ESLint for code quality checks
 
 ## Project Structure
 
 ```text
 fullstack_mini_shop_project
-├── docker-compose.yml
-├── mini-shop-backend
-└── mini_shop_frontend
++-- docker-compose.yml
++-- mini-shop-backend-Express-old
++-- mini_shop_backend_nest
+L-- mini_shop_frontend
 ```
 
 ## Local Database With Docker
@@ -74,7 +74,7 @@ DATABASE_URL="postgresql://postgres:postgres@localhost:5432/mini_shop_db"
 Go to the backend folder:
 
 ```bash
-cd mini-shop-backend
+cd mini_shop_backend_nest
 ```
 
 Install dependencies:
@@ -104,7 +104,7 @@ npm run seed:products
 Start backend in development mode:
 
 ```bash
-npm run dev
+npm run start:dev
 ```
 
 Build backend:
@@ -166,14 +166,14 @@ If the database is unavailable, the API still responds, but the database status 
 
 ```text
 GET    /products
-GET    /products/categories
 GET    /products/:id
 POST   /products
 PUT    /products/:id
 DELETE /products/:id
+GET    /categories
 ```
 
-Create and update requests are validated with Express middleware before data reaches the controller and database.
+Create and update requests are validated with NestJS DTOs before data reaches the service and database.
 
 ## DummyJSON Usage
 
@@ -202,3 +202,4 @@ https://mini-shop-backend-wxq7.onrender.com
 ```
 
 Vercel proxies frontend `/api/*` requests to the Render backend to avoid browser CORS issues.
+

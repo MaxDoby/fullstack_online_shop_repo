@@ -41,7 +41,7 @@ const CartPage = ({
 							<img src={item.thumbnail} alt={item.title} className="cart-item-image" />
 							<div className="cart-item-info">
 								<h3>{item.title}</h3>
-								<p>Categorie: {item.category}</p>
+								<p>Categorie: {item.category.name}</p>
 								<p>Cantitate: {item.quantity}</p>
 								<div className="cart-quantity-controls">
 									<button type="button" className="btn-filter" onClick={() => decreaseCartItemQuantity(item.id)}>

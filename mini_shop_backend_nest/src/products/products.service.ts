@@ -1,22 +1,71 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { CreateProductDto, UpdateProductDto } from './create.product.dto';
+import { CreateProductDto } from './dto/create-product.dto';
+import { UpdateProductDto } from './dto/update-product.dto';
 import { PrismaService } from '../prisma/prisma.service';
+import { Prisma } from '@prisma/client';
+import { GetProductsQueryDto } from './dto/get-products-query.dto';
 
 @Injectable()
 export class ProductsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getAllProducts() {
-    return await this.prisma.product.findMany();
-  }
+  async getAllProducts(query: GetProductsQueryDto) {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 8;
+    const sortBy = query.sortBy ?? 'id';
+    const sortOrder = query.sortOrder ?? 'asc';
+    const skip = (page - 1) * limit;
+    const { search, category } = query;
+    const where: Prisma.ProductWhereInput = {};
 
-  async getAllCategories() {
-    const products = await this.getAllProducts();
+    if (category) where.category = { name: category };
 
-    const uniqueCategories = [
-      ...new Set(products.map((product) => product.category)),
-    ];
-    return uniqueCategories;
+    if (search) {
+      where.OR = [
+        {
+          title: {
+            contains: search,
+            mode: 'insensitive',
+          },
+        },
+        {
+          description: {
+            contains: search,
+            mode: 'insensitive',
+          },
+        },
+      ];
+    }
+
+    // const items = await this.prisma.product.findMany({
+    //   where,
+    //   skip,
+    //   take: limit,
+    //   orderBy: { [sortBy]: sortOrder },
+    // });
+
+    // const total = await this.prisma.product.count({
+    //   where,
+    // });
+
+    // const totalPages = Math.ceil(total / limit);
+
+    // return { items, total, page, limit, totalPages };
+
+    const [items, total] = await this.prisma.$transaction([
+      this.prisma.product.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { [sortBy]: sortOrder },
+        include: { category: true },
+      }),
+      this.prisma.product.count({ where }),
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
+
+    return { items, total, page, limit, totalPages };
   }
 
   async getProductById(id: number) {
@@ -28,18 +77,41 @@ export class ProductsService {
   }
 
   createProduct(body: CreateProductDto) {
-    const product = this.prisma.product.create({ data: body });
+    const { category, ...productData } = body;
+    const product = this.prisma.product.create({
+      data: {
+        ...productData,
+        category: {
+          connect: { name: category },
+        },
+      },
+    });
     return product;
   }
 
   async updateProduct(id: number, body: UpdateProductDto) {
+    const { category, ...productData } = body;
+
+    const data: Prisma.ProductUpdateInput = {
+      ...productData,
+    };
+
+    if (category) {
+      data.category = {
+        connect: {
+          name: category,
+        },
+      };
+    }
+
     const product = await this.prisma.product.findUnique({
       where: { id },
     });
     if (!product) throw new NotFoundException('Product not found by id.');
+
     const updatedProduct = this.prisma.product.update({
       where: { id },
-      data: body,
+      data,
     });
     return updatedProduct;
   }
