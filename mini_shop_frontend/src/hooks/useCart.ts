@@ -7,66 +7,101 @@ import {
 	logicDecreaseCartItemQuantity,
 } from '../utils/cartActions.ts';
 import type { Product } from './useProducts.ts';
-import { getUserCartStorageKey, getUserOrdersStorageKey } from '../utils/authHelpers.ts';
+import { getUserCartStorageKey } from '../utils/authHelpers.ts';
 
 export interface CartItem extends Product {
-	quantity: number;
+    quantity: number;
 }
 
 export interface OrderHistoryItem {
-	id: string;
-	userId: number | null;
-	items: CartItem[];
-	total: number;
-	createdAt: string;
+    id: string;
+    userId: number | null;
+    items: CartItem[];
+    total: number;
+    createdAt: string;
 }
 
-const useCart = (userId: number | null) => {
+interface BackendOrderItem {
+    id: number;
+    orderId: number;
+    productId: number;
+    quantity: number;
+    priceAtPurchase: number;
+    product: Product;
+}
+
+interface BackendOrder {
+    id: number;
+    userId: number;
+    totalCost: number;
+    createdAt: string;
+    orderItems: BackendOrderItem[];
+}
+
+const apiBaseUrl = '/api';
+
+const mapBackendOrderToHistory = (order: BackendOrder): OrderHistoryItem => ({
+	id: String(order.id),
+	userId: order.userId,
+	total: order.totalCost,
+	createdAt: order.createdAt,
+	items: order.orderItems.map((orderItem) => ({
+		...orderItem.product,
+		price: orderItem.priceAtPurchase,
+		quantity: orderItem.quantity,
+	})),
+});
+
+const useCart = (userId: number | null, accessToken: string | null) => {
 	const [cartItems, setCartItems] = useState<CartItem[]>([]);
 	const [isCartLoaded, setIsCartLoaded] = useState<boolean>(false);
 	const [orderHistory, setOrderHistory] = useState<OrderHistoryItem[]>([]);
 
 	const cartStorageKey = userId ? getUserCartStorageKey(userId) : 'mini-shop-cart';
-	const ordersStorageKey = userId ? getUserOrdersStorageKey(userId) : null;
 
 	const addToCart = (product: Product) => {
 		logicAddToCart(product, setCartItems);
 	};
+
 	const removeFromCart = (productId: number) => {
 		logicRemoveFromCart(productId, setCartItems);
 	};
+
 	const clearCart = () => {
 		logicClearCart(setCartItems);
 	};
+
 	const increaseCartItemQuantity = (productId: number) => {
 		logicIncreaseCartItemQuantity(productId, setCartItems);
 	};
+
 	const decreaseCartItemQuantity = (productId: number) => {
 		logicDecreaseCartItemQuantity(productId, setCartItems);
 	};
-	const saveOrderToHistory = () => {
-		if (cartItems.length === 0 || !ordersStorageKey) return;
 
-		const savedOrders = localStorage.getItem(ordersStorageKey);
+	const checkout = async () => {
+		if (!accessToken) throw new Error('Autentificarea necesara pentru plasarea comenzii.');
 
-		const parsedOrders: OrderHistoryItem[] = savedOrders ? JSON.parse(savedOrders) : [];
+		const orderItemsForBackend = cartItems.map((item) => ({
+			productId: item.id,
+			quantity: item.quantity,
+		}));
 
-		const newOrder: OrderHistoryItem = {
-			id: crypto.randomUUID(),
-			userId,
-			items: cartItems.map((item) => ({ ...item })),
-			total: cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0),
-			createdAt: new Date().toISOString(),
-		};
+		const response = await fetch(`${apiBaseUrl}/orders`, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+				Authorization: `Bearer ${accessToken}`,
+			},
+			body: JSON.stringify({ items: orderItemsForBackend }),
+		});
 
-		const updatedOrders = [...parsedOrders, newOrder];
+		if (!response.ok) throw new Error('Unable to create order.');
 
-		localStorage.setItem(ordersStorageKey, JSON.stringify(updatedOrders));
-		setOrderHistory(updatedOrders);
-	};
+		const createdOrder: BackendOrder = await response.json();
+		const mappedOrder = mapBackendOrderToHistory(createdOrder);
 
-	const checkout = () => {
-		saveOrderToHistory();
+		setOrderHistory((currentOrders) => [...currentOrders, mappedOrder]);
 		alert('Comanda a fost plasata cu succes!');
 		setCartItems([]);
 	};
@@ -86,19 +121,28 @@ const useCart = (userId: number | null) => {
 	}, [cartStorageKey]);
 
 	useEffect(() => {
-		if (!ordersStorageKey) {
+		if (!userId || !accessToken) {
 			setOrderHistory([]);
 			return;
 		}
 
-		const savedOrders = localStorage.getItem(ordersStorageKey);
+		const loadOrders = async () => {
+			const response = await fetch(`${apiBaseUrl}/orders/my`, {
+				headers: {
+					Authorization: `Bearer ${accessToken}`,
+				},
+			});
 
-		if (savedOrders) {
-			setOrderHistory(JSON.parse(savedOrders));
-		} else {
-			setOrderHistory([]);
-		}
-	}, [ordersStorageKey]);
+			if (!response.ok) throw new Error('Unable to load orders.');
+
+			const data: BackendOrder[] = await response.json();
+			const mappedOrders = data.map(mapBackendOrderToHistory).reverse();
+
+			setOrderHistory(mappedOrders);
+		};
+
+		loadOrders();
+	}, [userId, accessToken]);
 
 	useEffect(() => {
 		if (!isCartLoaded) return;

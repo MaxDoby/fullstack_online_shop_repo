@@ -13,14 +13,34 @@ export interface AuthUser {
 	lastName: string;
 }
 
-interface AuthResponse { user: AuthUser; accessToken: string}
+interface AuthResponse {
+	user: AuthUser;
+	accessToken: string;
+}
 
-const apiBaseUrl = '/api';
+interface ApiErrorResponse {
+    message: string | string[];
+    error?: string;
+    statusCode?: number;
+}
 
 const useAuth = () => {
+	const apiBaseUrl = '/api';
 	const [authUser, setAuthUser] = useState<AuthUser | null>(null);
 	const [accessToken, setAccessToken] = useState<string | null>(null);
 	const [isAuthLoaded, setIsAuthLoaded] = useState<boolean>(false);
+
+	const getApiErrorMessage = (data: ApiErrorResponse, fallbackMessage: string) => {
+		if (Array.isArray(data.message)) {
+			return data.message.join(' ');
+		}
+
+		if (data.message) {
+			return data.message;
+		}
+
+		return fallbackMessage;
+	};
 
 	useEffect(() => {
 		const session = loadAuthSession();
@@ -61,13 +81,17 @@ const useAuth = () => {
 			}),
 		});
 
-		const data: AuthResponse = await response.json();
+		const data: AuthResponse | ApiErrorResponse = await response.json();
 
-		if (!response.ok) throw new Error('Inregistrarea a esuat.');
+		if (!response.ok) {
+			throw new Error(getApiErrorMessage(data as ApiErrorResponse, 'Inregistrarea a esuat.'));
+		}
 
-		setAuthUser(data.user);
-		setAccessToken(data.accessToken);
-		saveAuthSession(JSON.stringify(data.user), data.accessToken);
+		const authData = data as AuthResponse;
+
+		setAuthUser(authData.user);
+		setAccessToken(authData.accessToken);
+		saveAuthSession(JSON.stringify(authData.user), authData.accessToken);
 	};
 
 	const login = async (username: string, password: string) => {
@@ -80,18 +104,20 @@ const useAuth = () => {
 			}),
 		});
 
-		const data: AuthResponse = await response.json();
+		const data: AuthResponse | ApiErrorResponse = await response.json();
 
 		if (!response.ok) {
-			throw new Error('Autentificare esuata.');
+			throw new Error(getApiErrorMessage(data as ApiErrorResponse, 'Autentificarea a esuat.'));
 		}
 
-		setAuthUser(data.user);
-		setAccessToken(data.accessToken);
+		const authData = data as AuthResponse;
+
+		setAuthUser(authData.user);
+		setAccessToken(authData.accessToken);
 
 		saveAuthSession(
-			JSON.stringify(data.user),
-			data.accessToken,
+			JSON.stringify(authData.user),
+			authData.accessToken,
 		);
 	};
 

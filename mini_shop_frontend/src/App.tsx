@@ -23,7 +23,7 @@ const App = () => {
 
 	const productsState = useProducts();
 	const authState = useAuth();
-	const cartState = useCart(authState.authUser?.id ?? null);
+	const cartState = useCart(authState.authUser?.id ?? null, authState.accessToken);
 
 	const {
 		products,
@@ -63,7 +63,7 @@ const App = () => {
 		logicFilterProducts(cat, setActiveCategory, setCurrentPage, setSearchQuery);
 	};
 
-	const handleCheckout = () => {
+	const handleCheckout = async () => {
 		if (!isAuthenticated) {
 			alert('Autentificati-va sau creati un cont pentru a plasa comanda.');
 			navigate('/auth');

@@ -20,5 +20,6 @@ if (!jwtSecret) throw new Error('JWT_SECRET is not configured.');
       },
     }),
   ],
+  exports: [JwtModule],
 })
 export class AuthModule {}
