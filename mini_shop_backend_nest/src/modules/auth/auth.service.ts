@@ -4,10 +4,11 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
-import { CreateUserDto } from '../users/dto/create-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
+import { RegisterUserDto } from './dto/register-user.dto';
+import { isEmail } from 'class-validator';
 
 @Injectable()
 export class AuthService {
@@ -16,12 +17,12 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
-  async registerUser(body: CreateUserDto) {
+  async registerUser(body: RegisterUserDto) {
     const existingEmail = await this.usersService.findByEmail(body.email);
 
     if (existingEmail)
       throw new ConflictException({
-        message: 'This email is already registered',
+        message: 'This email is already used.',
       });
 
     const existingUsername = await this.usersService.findByUsername(
@@ -33,7 +34,17 @@ export class AuthService {
         message: 'This username is already used.',
       });
 
-    const user = await this.usersService.createUser(body);
+    const hashedPassword = await bcrypt.hash(body.password, 10);
+
+    const userData = {
+      username: body.username,
+      email: body.email,
+      password: hashedPassword,
+      firstName: body.firstName,
+      lastName: body.lastName,
+    };
+    const user = await this.usersService.createUser(userData);
+
     const payload = {
       sub: user.id,
       username: user.username,
@@ -60,7 +71,7 @@ export class AuthService {
   }
 
   async loginUser(body: LoginUserDto) {
-    const user = body.identifier.includes('@')
+    const user = isEmail(body.identifier)
       ? await this.usersService.findByEmail(body.identifier)
       : await this.usersService.findByUsername(body.identifier);
 

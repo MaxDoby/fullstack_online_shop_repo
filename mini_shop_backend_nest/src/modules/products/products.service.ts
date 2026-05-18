@@ -1,9 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaService } from '../../core/prisma/prisma.service';
 import { Prisma } from '@prisma/client';
 import { GetProductsQueryDto } from './dto/get-products-query.dto';
+import { PageMetaDto } from '../../common/dto/page-meta.dto';
+import { PageDto } from '../../common/dto/page.dto';
 
 @Injectable()
 export class ProductsService {
@@ -63,9 +65,8 @@ export class ProductsService {
       this.prisma.product.count({ where }),
     ]);
 
-    const totalPages = Math.ceil(total / limit);
-
-    return { items, total, page, limit, totalPages };
+    const meta = new PageMetaDto(total, page, limit);
+    return new PageDto(items, meta);
   }
 
   async getProductById(id: number) {

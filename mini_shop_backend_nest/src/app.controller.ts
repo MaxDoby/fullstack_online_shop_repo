@@ -1,7 +1,7 @@
 import { Controller, Get, HttpStatus, Res } from '@nestjs/common';
 import type { Response } from 'express';
 import { AppService } from './app.service';
-import { PrismaService } from './prisma/prisma.service';
+import { PrismaService } from './core/prisma/prisma.service';
 
 @Controller()
 export class AppController {
@@ -9,11 +9,6 @@ export class AppController {
     private readonly appService: AppService,
     private readonly prisma: PrismaService,
   ) {}
-
-  @Get()
-  getHello(): string {
-    return this.appService.getHello();
-  }
 
   @Get('health')
   async getHealth(@Res() res: Response) {

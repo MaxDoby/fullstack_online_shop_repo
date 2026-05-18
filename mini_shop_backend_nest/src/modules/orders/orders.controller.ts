@@ -14,6 +14,12 @@ import { CreateOrderDto } from './dto/create-order.dto';
 import { UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth/jwt-auth.guard';
 import { Request } from 'express';
+import {
+  ApiBearerAuth,
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+} from '@nestjs/swagger';
 
 interface JwtPayload {
   sub: number;
@@ -25,10 +31,29 @@ type AuthenticatedRequest = Request & {
   user: JwtPayload;
 };
 
+@ApiTags('Orders')
 @Controller('orders')
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
 
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Create order.' })
+  @ApiResponse({
+    status: 201,
+    description: 'Order created successfully.',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Validation error.',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Missing or invalid token.',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'One or more products were not found.',
+  })
   @UseGuards(JwtAuthGuard)
   @Post()
   create(
@@ -44,7 +69,17 @@ export class OrdersController {
   //     return this.ordersService.findAll();
   //   }
 
+  @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Get authenticated user orders.' })
+  @ApiResponse({
+    status: 200,
+    description: 'Get authenticated user orders.',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Missing or invalid token.',
+  })
   @Get('my')
   findMyOrders(@Req() request: AuthenticatedRequest) {
     const userId = request.user.sub;

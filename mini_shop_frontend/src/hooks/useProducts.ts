@@ -1,5 +1,14 @@
 import { useState, useEffect } from 'react';
 
+interface ProductPageMeta {
+	total: number;
+	page: number;
+	limit: number;
+	totalPages: number;
+	hasNextPage: boolean;
+	hasPreviousPage: boolean
+}
+
 export interface Product {
 	id: number;
 	title: string;
@@ -15,10 +24,7 @@ export interface Product {
 
 interface ProductsResponse {
     items: Product[];
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
+	meta: ProductPageMeta;
 }
 
 const productsOnPage = 8;
@@ -73,7 +79,7 @@ const useProducts = () => {
 			const data: ProductsResponse = await response.json();
 
 			setProducts(data.items);
-			setTotalPages(data.totalPages);
+			setTotalPages(data.meta.totalPages);
 		};
 		loadProducts();
 	}, [currentPage, activeCategory, debouncedSearchQuery]);
