@@ -7,6 +7,7 @@ import { PrismaService } from '../../core/prisma/prisma.service';
 import { StorageService } from '../../core/storage/storage.service';
 import sharp from 'sharp';
 import 'multer';
+import { ResizeImageParamsDto } from './dto/resize-image.dto';
 
 @Injectable()
 export class ImagesService {
@@ -73,5 +74,24 @@ export class ImagesService {
 
   remove(id: number) {
     return `This action removes a #${id} image`;
+  }
+
+  async scaleImage(params: ResizeImageParamsDto) {
+    const { metaImage, imageFile } = await this.findOne(params.imageId);
+    const [widthText, heightText] = params.size.split('x');
+
+    const width = Number(widthText);
+    const height = Number(heightText);
+
+    const resizedBuffer = await sharp(imageFile.body)
+      .resize(width, height)
+      .toBuffer();
+
+    return {
+      metaImage,
+      imageFile: {
+        body: resizedBuffer,
+      },
+    };
   }
 }
