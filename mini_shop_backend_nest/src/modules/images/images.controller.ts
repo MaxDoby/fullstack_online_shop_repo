@@ -5,7 +5,6 @@ import {
   Param,
   UploadedFile,
   UseInterceptors,
-  ParseIntPipe,
   Res,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -80,7 +79,7 @@ export class ImagesController {
   @ApiOperation({
     summary: 'Get resized product image.',
     description:
-      'Returns a resized version of the product image. The current supported size is 500x300. The original image is loaded from storage, resized with Sharp, and returned directly as an image response.',
+      'Returns a resized version of the product image. The original image is loaded from storage, resized with Sharp, and returned directly as an image response.',
   })
   @ApiParam({
     name: 'imageId',
@@ -89,10 +88,16 @@ export class ImagesController {
     example: 1,
   })
   @ApiParam({
-    name: 'size',
-    type: String,
-    description: 'Requested image size. Currently only 500x300 is supported.',
-    example: '500x300',
+    name: 'width',
+    type: Number,
+    description: 'Requested image width size.',
+    example: 500,
+  })
+  @ApiParam({
+    name: 'height',
+    type: Number,
+    description: 'Requested image height size.',
+    example: 300,
   })
   @ApiResponse({
     status: 200,
@@ -109,13 +114,13 @@ export class ImagesController {
   @ApiResponse({
     status: 400,
     description:
-      'Invalid image ID or unsupported image size. Supported size: 500x300.',
+      'Invalid image ID, width, or height. Width and height must be between 1 and 2000.',
   })
   @ApiResponse({
     status: 404,
     description: 'Image not found.',
   })
-  @Get(':imageId/:size')
+  @Get(':imageId/:width/:height')
   async scaleImage(
     @Param() params: ResizeImageParamsDto,
     @Res() res: Response,

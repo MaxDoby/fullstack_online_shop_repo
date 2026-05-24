@@ -78,10 +78,8 @@ export class ImagesService {
 
   async scaleImage(params: ResizeImageParamsDto) {
     const { metaImage, imageFile } = await this.findOne(params.imageId);
-    const [widthText, heightText] = params.size.split('x');
 
-    const width = Number(widthText);
-    const height = Number(heightText);
+    const { width, height } = params;
 
     const resizedBuffer = await sharp(imageFile.body)
       .resize(width, height)
