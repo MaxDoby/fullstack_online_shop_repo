@@ -13,7 +13,7 @@ import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { GetProductsQueryDto } from './dto/get-products-query.dto';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
-import { PageDto } from '../../common/dto/page.dto';
+import { ProductsPageResponseDto } from './dto/products-page-response.dto';
 
 @ApiTags('Products')
 @Controller('products')
@@ -24,7 +24,7 @@ export class ProductsController {
   @ApiResponse({
     status: 200,
     description: 'Products list retrieved successfully.',
-    type: PageDto,
+    type: ProductsPageResponseDto,
   })
   @ApiResponse({
     status: 400,
