@@ -21,7 +21,7 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { ResizeImageWithSizeParamsDto } from './dto/resize-image-with-size.dot';
+import { ResizeImageWithSizeParamsDto } from './dto/resize-image-with-size.dto';
 
 @ApiTags('Images')
 @Controller('images')

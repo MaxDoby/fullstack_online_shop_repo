@@ -60,7 +60,18 @@ export class ProductsService {
         skip,
         take: limit,
         orderBy: { [sortBy]: sortOrder },
-        include: { category: true },
+        include: {
+          category: true,
+          productImages: {
+            select: {
+              id: true,
+            },
+            orderBy: {
+              createdAt: 'asc',
+            },
+            take: 1,
+          },
+        },
       }),
       this.prisma.product.count({ where }),
     ]);

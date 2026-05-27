@@ -14,6 +14,14 @@ export class ProductCategoryResponseDto {
   public readonly name!: string;
 }
 
+export class ProductImageResponseDto {
+  @ApiProperty({
+    description: 'Product image ID.',
+    example: 1,
+  })
+  public readonly id!: number;
+}
+
 export class ProductResponseDto {
   @ApiProperty({
     description: 'Product ID.',
@@ -56,4 +64,10 @@ export class ProductResponseDto {
     type: ProductCategoryResponseDto,
   })
   public readonly category!: ProductCategoryResponseDto;
+
+  @ApiProperty({
+    description: 'Product images attached to this product.',
+    type: [ProductImageResponseDto],
+  })
+  public readonly productImages!: ProductImageResponseDto[];
 }
