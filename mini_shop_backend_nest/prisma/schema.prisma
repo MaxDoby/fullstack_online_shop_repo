@@ -35,6 +35,7 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   orders    Order[]
+  role 		UserRole @default(USER)
 }
 
 model Order {
@@ -67,4 +68,9 @@ model ProductImage {
   width			Int
   height		Int
   createdAt		DateTime @default(now())
+}
+
+enum UserRole {
+	USER
+	ADMIN
 }

@@ -7,6 +7,7 @@ import {
   Put,
   Delete,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
@@ -14,11 +15,15 @@ import { UpdateProductDto } from './dto/update-product.dto';
 import { GetProductsQueryDto } from './dto/get-products-query.dto';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { ProductsPageResponseDto } from './dto/products-page-response.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth/jwt-auth.guard';
+import { AdminGuard } from '../auth/guards/admin/admin.guard';
 
 @ApiTags('Products')
 @Controller('products')
 export class ProductsController {
   constructor(private readonly productService: ProductsService) {}
+
+  /// ---getAllProducts---
 
   @ApiOperation({ summary: 'Get all products.' })
   @ApiResponse({
@@ -34,6 +39,8 @@ export class ProductsController {
   getAllProducts(@Query() query: GetProductsQueryDto) {
     return this.productService.getAllProducts(query);
   }
+
+  /// ---getProductById---
 
   @ApiParam({
     name: 'id',
@@ -55,6 +62,8 @@ export class ProductsController {
     return this.productService.getProductById(Number(id));
   }
 
+  /// ---createProduct---
+
   @ApiOperation({ summary: 'Create product.' })
   @ApiResponse({
     status: 201,
@@ -64,10 +73,13 @@ export class ProductsController {
     status: 400,
     description: 'Validation error.',
   })
+  @UseGuards(JwtAuthGuard, AdminGuard)
   @Post()
   createProduct(@Body() body: CreateProductDto) {
     return this.productService.createProduct(body);
   }
+
+  /// ---updateProduct---
 
   @ApiParam({
     name: 'id',
@@ -88,10 +100,13 @@ export class ProductsController {
     status: 404,
     description: 'Product not found.',
   })
+  @UseGuards(JwtAuthGuard, AdminGuard)
   @Put(':id')
   updateProduct(@Param('id') id: string, @Body() body: UpdateProductDto) {
     return this.productService.updateProduct(Number(id), body);
   }
+
+  /// ---deleteProduct---
 
   @ApiParam({
     name: 'id',
@@ -108,6 +123,7 @@ export class ProductsController {
     status: 404,
     description: 'Product not found.',
   })
+  @UseGuards(JwtAuthGuard, AdminGuard)
   @Delete(':id')
   deleteProduct(@Param('id') id: string) {
     return this.productService.deleteProduct(Number(id));

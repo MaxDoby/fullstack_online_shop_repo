@@ -11,8 +11,8 @@ const ProductsOnPage = ({ productsToShow, addToCart, setSelectedImage }: Product
 		{productsToShow.map((product) => (
 			<article key={product.id} className="product-card">
 				<div className="card-glass" />
-				<button type="button" className="product-image-button" onClick={() => setSelectedImage(product.thumbnail)}>
-					<img src={product.thumbnail} alt={product.title} className="product-image" />
+				<button type="button" className="product-image-button" onClick={() => setSelectedImage(product.imageUrl)}>
+					<img src={product.imageUrl} alt={product.title} className="product-image" />
 				</button>
 				<h3>{product.title}</h3>
 				<p className="category">{product.category.name}</p>

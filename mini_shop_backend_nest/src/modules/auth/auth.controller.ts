@@ -34,6 +34,8 @@ type AuthenticatedRequest = Request & {
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  /// ---registerUser---
+
   @ApiOperation({ summary: 'Register a new user.' })
   @ApiResponse({ status: 201, description: 'User registration successful.' })
   @ApiResponse({ status: 409, description: 'Email/Username already used.' })
@@ -42,6 +44,8 @@ export class AuthController {
   async registerUser(@Body() body: RegisterUserDto) {
     return this.authService.registerUser(body);
   }
+
+  /// ---loginUser---
 
   @ApiOperation({ summary: 'Login user.' })
   @ApiResponse({ status: 200, description: 'User logged in successfully' })
@@ -55,6 +59,8 @@ export class AuthController {
   async loginUser(@Body() body: LoginUserDto) {
     return this.authService.loginUser(body);
   }
+
+  /// ---getMe---
 
   @ApiOperation({ summary: 'Get user data.' })
   @ApiResponse({ status: 200, description: 'Authenticated user data.' })

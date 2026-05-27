@@ -12,6 +12,7 @@ import NewsTicker from './components/NewsTicker.tsx';
 import SearchCont from './components/SearchCont.tsx';
 import CartPage from './pages/CartPage.tsx';
 import ProductsPage from './pages/ProductsPage.tsx';
+import AdminPage from './pages/AdminPage.tsx';
 
 import useProducts from './hooks/useProducts.ts';
 import useCart from './hooks/useCart.ts';
@@ -57,6 +58,7 @@ const App = () => {
 		isAuthenticated,
 		authUser,
 		registerLocal,
+		accessToken,
 	} = authState;
 
 	const filterProducts = (cat: string) => {
@@ -119,6 +121,8 @@ const App = () => {
 				logout={logout}
 				isAuthenticated={isAuthenticated}
 				authUsername={authUser?.username || null}
+				openAdmin={() => navigate('/admin')}
+				isAdmin={authUser?.role === 'ADMIN'}
 			/>
 
 			<NewsTicker />
@@ -163,6 +167,16 @@ const App = () => {
 						/>
 					)}
 				/>
+				<Route
+					path="/admin"
+					element={(
+						authUser?.role === 'ADMIN'
+						? (
+							<AdminPage accessToken={accessToken} />
+)
+						: <Navigate to="/products" replace />
+	)}
+					/>
 
 				<Route path="*" element={<Navigate to="/products" replace />} />
 			</Routes>

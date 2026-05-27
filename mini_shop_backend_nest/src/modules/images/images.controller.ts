@@ -6,7 +6,10 @@ import {
   UploadedFile,
   UseInterceptors,
   Res,
+  UseGuards,
 } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth/jwt-auth.guard';
+import { AdminGuard } from '../auth/guards/admin/admin.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
 import type { Response } from 'express';
 import { ImagesService } from './images.service';
@@ -70,6 +73,7 @@ export class ImagesController {
     status: 404,
     description: 'Product not found.',
   })
+  @UseGuards(JwtAuthGuard, AdminGuard)
   @Post('/products/:productId')
   @UseInterceptors(FileInterceptor('file'))
   uploadProductImage(

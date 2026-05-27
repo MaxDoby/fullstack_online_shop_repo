@@ -6,10 +6,12 @@ interface HeaderProps {
 	logout: () => void;
 	isAuthenticated: boolean;
 	authUsername: string | null;
+	openAdmin: () => void;
+	isAdmin: boolean;
 }
 
 const Header = ({
-	cartCount, openCart, openShop, openAuth, logout, isAuthenticated, authUsername,
+	cartCount, openCart, openShop, openAuth, logout, isAuthenticated, authUsername, openAdmin, isAdmin,
 }: HeaderProps) => (
 	<header className="header">
 		<button type="button" className="logo-link header-reset-button" onClick={openShop}>
@@ -34,17 +36,22 @@ const Header = ({
 				<>
 					<span className="auth-user-name">{authUsername ? `Salut, ${authUsername}` : 'Cont activ'}</span>
 
+					{isAdmin && (
+					<button type="button" className="btn-filter" onClick={openAdmin}>
+						Admin
+					</button>
+                    )}
+
 					<button type="button" className="btn-filter" onClick={logout}>
 						Logout
 					</button>
 				</>
-			) : (
-				<button type="button" className="btn-filter" onClick={openAuth}>
-					Login / Register
-				</button>
-			)}
+            ) : (
+	<button type="button" className="btn-filter" onClick={openAuth}>
+		Login / Register
+	</button>
+            )}
 		</div>
-
 	</header>
 );
 

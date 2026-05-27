@@ -49,12 +49,21 @@ export class AuthService {
       sub: user.id,
       username: user.username,
       email: user.email,
+      role: user.role,
     };
 
     const accessToken = await this.jwtService.signAsync(payload);
 
-    const { id, username, email, firstName, lastName, createdAt, updatedAt } =
-      user;
+    const {
+      id,
+      username,
+      email,
+      firstName,
+      lastName,
+      createdAt,
+      updatedAt,
+      role,
+    } = user;
 
     return {
       user: {
@@ -65,6 +74,7 @@ export class AuthService {
         lastName,
         createdAt,
         updatedAt,
+        role,
       },
       accessToken,
     };
@@ -87,14 +97,32 @@ export class AuthService {
       sub: user.id,
       username: user.username,
       email: user.email,
+      role: user.role,
     };
 
     const accessToken = await this.jwtService.signAsync(payload);
 
-    const { id, username, email, firstName, lastName, createdAt, updatedAt } =
-      user;
+    const {
+      id,
+      username,
+      email,
+      firstName,
+      lastName,
+      createdAt,
+      updatedAt,
+      role,
+    } = user;
     return {
-      user: { id, username, email, firstName, lastName, createdAt, updatedAt },
+      user: {
+        id,
+        username,
+        email,
+        firstName,
+        lastName,
+        createdAt,
+        updatedAt,
+        role,
+      },
       accessToken,
     };
   }

@@ -9,21 +9,28 @@ interface ProductPageMeta {
 	hasPreviousPage: boolean
 }
 
-export interface Product {
-	id: number;
-	title: string;
-	description: string;
-	price: number;
-	stock: number;
-	category: {
-		id: number;
-		name: string;
-	};
-	thumbnail: string;
+interface ProductFromApi {
+    id: number;
+    title: string;
+    description: string;
+    price: number;
+    stock: number;
+    category: {
+        id: number;
+        name: string;
+    };
+    thumbnail: string;
+    productImages: {
+        id: number;
+    }[];
+}
+
+export interface Product extends ProductFromApi {
+    imageUrl: string;
 }
 
 interface ProductsResponse {
-    items: Product[];
+    items: ProductFromApi[];
 	meta: ProductPageMeta;
 }
 
@@ -31,6 +38,14 @@ const productsOnPage = 8;
 const searchDebounceMs = 500;
 
 const apiBaseUrl = '/api';
+
+const getProductImageUrl = (product: ProductFromApi) => {
+	const firstImage = product.productImages[0];
+
+	if (!firstImage) return product.thumbnail;
+
+	return `${apiBaseUrl}/images/${firstImage.id}/300/200`;
+};
 
 const useProducts = () => {
 	const [products, setProducts] = useState<Product[]>([]);
@@ -78,11 +93,29 @@ const useProducts = () => {
 			const response = await fetch(`${apiBaseUrl}/products?${params.toString()}`);
 			const data: ProductsResponse = await response.json();
 
-			setProducts(data.items);
+			const productsWithImageUrl = data.items.map((product) => ({
+				...product,
+				imageUrl: getProductImageUrl(product),
+			}));
+
+			setProducts(productsWithImageUrl);
 			setTotalPages(data.meta.totalPages);
 		};
 		loadProducts();
 	}, [currentPage, activeCategory, debouncedSearchQuery]);
+
+	const deleteProduct = async (productId: number, accessToken: string) => {
+		const response = await fetch(`${apiBaseUrl}/products/${productId}`, {
+			method: 'DELETE',
+			headers: {
+				Authorization: `Bearer ${accessToken}`,
+			},
+		});
+
+		if (!response.ok) throw new Error('Product delete failed.');
+
+		setProducts((currentProducts) => currentProducts.filter((product) => product.id !== productId));
+	};
 
 	return {
 		products,
@@ -96,6 +129,7 @@ const useProducts = () => {
 		activeCategory,
 		setActiveCategory,
 		totalPages,
+		deleteProduct,
 	};
 };
 
