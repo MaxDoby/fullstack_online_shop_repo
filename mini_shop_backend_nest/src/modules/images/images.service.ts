@@ -92,4 +92,36 @@ export class ImagesService {
       },
     };
   }
+
+  async scaleImageWithSize(imageId: number, size: string) {
+    const { metaImage, imageFile } = await this.findOne(imageId);
+
+    const [widthText, heightText] = size.split('x');
+    const width = Number(widthText);
+    const height = Number(heightText);
+
+    if (
+      !width ||
+      !height ||
+      width < 1 ||
+      width > 2000 ||
+      height < 1 ||
+      height > 2000
+    ) {
+      throw new BadRequestException(
+        'Invalid image size. Expected format: 500x300',
+      );
+    }
+
+    const resizedBuffer = await sharp(imageFile.body)
+      .resize(width, height)
+      .toBuffer();
+
+    return {
+      metaImage,
+      imageFile: {
+        body: resizedBuffer,
+      },
+    };
+  }
 }

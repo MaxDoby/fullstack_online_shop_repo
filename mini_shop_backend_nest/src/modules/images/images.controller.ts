@@ -21,11 +21,14 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { ResizeImageWithSizeParamsDto } from './dto/resize-image-with-size.dot';
 
 @ApiTags('Images')
 @Controller('images')
 export class ImagesController {
   constructor(private readonly imagesService: ImagesService) {}
+
+  /// --- UPLOAD_PRODUCT_IMAGE ---
 
   @ApiOperation({
     summary: 'Upload product image.',
@@ -75,6 +78,8 @@ export class ImagesController {
   ) {
     return this.imagesService.uploadProductImage(params.productId, file);
   }
+
+  /// --- SCALE_IMAGE ---
 
   @ApiOperation({
     summary: 'Get resized product image.',
@@ -132,6 +137,64 @@ export class ImagesController {
 
     return response;
   }
+
+  /// --- SCALE_IMAGE_WITH_SIZE ---
+
+  @ApiOperation({
+    summary: 'Get resized product image by size string.',
+    description:
+      'Returns a resized version of the product image. The size parameter is received in WIDTHxHEIGHT format, for example 500x300. This approach is compact and common in image/CDN-style APIs, but requires manual parsing before using Sharp.',
+  })
+  @ApiParam({
+    name: 'imageId',
+    type: Number,
+    description: 'Image ID from the ProductImage table.',
+    example: 1,
+  })
+  @ApiParam({
+    name: 'size',
+    type: String,
+    description:
+      'Requested image size in WIDTHxHEIGHT format. Width and height must be between 1 and 2000.',
+    example: '500x300',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Resized image returned successfully.',
+    content: {
+      'image/*': {
+        schema: {
+          type: 'string',
+          format: 'binary',
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description:
+      'Invalid image ID or size format. Expected format: WIDTHxHEIGHT, for example 500x300. Width and height must be between 1 and 2000.',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Image not found.',
+  })
+  @Get(':imageId/:size')
+  async scaleImageWithSize(
+    @Param() params: ResizeImageWithSizeParamsDto,
+    @Res() res: Response,
+  ) {
+    const { metaImage, imageFile } =
+      await this.imagesService.scaleImageWithSize(
+        Number(params.imageId),
+        params.size,
+      );
+
+    res.setHeader('Content-Type', metaImage.mimeType);
+    return res.send(imageFile.body);
+  }
+
+  /// --- FIND_PRODUCT_IMAGE ---
 
   @ApiOperation({
     summary: 'Get original product image.',
