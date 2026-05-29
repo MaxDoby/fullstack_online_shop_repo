@@ -18,6 +18,17 @@ export interface CreateAdminProductPayload {
 	thumbnail: string;
 }
 
+interface EditableAdminProduct {
+	id: number;
+	title: string;
+	description: string;
+	price: number;
+	stock: number;
+	category: {
+		name: string;
+	};
+}
+
 const initialAdminProductFormData: AdminProductFormData = {
 	title: '',
 	description: '',
@@ -29,6 +40,7 @@ const initialAdminProductFormData: AdminProductFormData = {
 
 const useAdminProductForm = () => {
 	const [formData, setFormData] = useState<AdminProductFormData>(initialAdminProductFormData);
+	const [editingProductId, setEditingProductId] = useState<number | null>(null);
 
 	const handleInputChange = (event: ChangeEvent<HTMLInputElement>) => {
 		const { name, value } = event.target;
@@ -48,8 +60,22 @@ const useAdminProductForm = () => {
 		}));
 	};
 
+	const startEditingProduct = (product: EditableAdminProduct) => {
+		setEditingProductId(product.id);
+
+		setFormData({
+			title: product.title,
+			description: product.description,
+			price: String(product.price),
+			stock: String(product.stock),
+			category: product.category.name,
+			imageFile: null,
+		});
+	};
+
 	const resetForm = () => {
 		setFormData(initialAdminProductFormData);
+		setEditingProductId(null);
 	};
 
 	const getCreateProductPayload = (): CreateAdminProductPayload => ({
@@ -67,6 +93,8 @@ const useAdminProductForm = () => {
 		resetForm,
 		getCreateProductPayload,
 		handleFileChange,
+		editingProductId,
+		startEditingProduct,
 	};
 };
 

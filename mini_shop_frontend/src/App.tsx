@@ -59,6 +59,7 @@ const App = () => {
 		authUser,
 		registerLocal,
 		accessToken,
+		isAuthLoaded,
 	} = authState;
 
 	const filterProducts = (cat: string) => {
@@ -108,6 +109,16 @@ const App = () => {
 		setCurrentPage,
 		totalPages,
 	};
+
+	let adminRouteElement = null;
+
+	if (isAuthLoaded) {
+		if (authUser?.role === 'ADMIN') {
+			adminRouteElement = <AdminPage accessToken={accessToken} />;
+		} else {
+			adminRouteElement = <Navigate to="/products" replace />;
+		}
+	}
 
 	return (
 		<div className="app-container">
@@ -169,13 +180,7 @@ const App = () => {
 				/>
 				<Route
 					path="/admin"
-					element={(
-						authUser?.role === 'ADMIN'
-						? (
-							<AdminPage accessToken={accessToken} />
-)
-						: <Navigate to="/products" replace />
-	)}
+					element={adminRouteElement}
 					/>
 
 				<Route path="*" element={<Navigate to="/products" replace />} />

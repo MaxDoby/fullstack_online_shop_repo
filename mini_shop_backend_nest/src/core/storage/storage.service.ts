@@ -3,6 +3,7 @@ import {
   S3Client,
   PutObjectCommand,
   GetObjectCommand,
+  DeleteObjectCommand,
 } from '@aws-sdk/client-s3';
 
 @Injectable()
@@ -51,5 +52,14 @@ export class StorageService {
       body: bodyBuffer,
       contentType: response.ContentType,
     };
+  }
+
+  async deleteFile(storageKey: string) {
+    const command = new DeleteObjectCommand({
+      Bucket: process.env.S3_BUCKET!,
+      Key: storageKey,
+    });
+
+    await this.s3Client.send(command);
   }
 }

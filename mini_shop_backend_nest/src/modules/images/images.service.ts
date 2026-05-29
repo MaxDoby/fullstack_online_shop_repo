@@ -56,11 +56,21 @@ export class ImagesService {
     return saveImageData;
   }
 
-  findAll() {
-    return `This action returns all images`;
+  async getProductImages(productId: number) {
+    const product = await this.prisma.product.findUnique({
+      where: { id: productId },
+    });
+
+    if (!product) throw new NotFoundException('Product not found.');
+    const productImages = await this.prisma.productImage.findMany({
+      where: { productId },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    return productImages;
   }
 
-  async findOne(id: number) {
+  async getOne(id: number) {
     const metaImage = await this.prisma.productImage.findUnique({
       where: { id },
     });
@@ -72,12 +82,48 @@ export class ImagesService {
     return { metaImage, imageFile };
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} image`;
+  async setPrimaryProductImage(imageId: number) {
+    const productImage = await this.prisma.productImage.findUnique({
+      where: { id: imageId },
+    });
+
+    if (!productImage) throw new NotFoundException('Image not found.');
+
+    const [, updatedImage] = await this.prisma.$transaction([
+      this.prisma.productImage.updateMany({
+        where: { productId: productImage.productId },
+        data: { isPrimary: false },
+      }),
+      this.prisma.productImage.update({
+        where: { id: imageId },
+        data: { isPrimary: true },
+      }),
+    ]);
+
+    return updatedImage;
+  }
+
+  async deleteProductImage(imageId: number) {
+    const productImage = await this.prisma.productImage.findUnique({
+      where: { id: imageId },
+    });
+
+    if (!productImage) throw new NotFoundException('Image not found.');
+
+    await this.storageService.deleteFile(productImage.storageKey);
+
+    await this.prisma.productImage.delete({
+      where: { id: imageId },
+    });
+
+    return {
+      message: `This image was successfully deleted.`,
+      imageId,
+    };
   }
 
   async scaleImage(params: ResizeImageParamsDto) {
-    const { metaImage, imageFile } = await this.findOne(params.imageId);
+    const { metaImage, imageFile } = await this.getOne(params.imageId);
 
     const { width, height } = params;
 
@@ -94,7 +140,7 @@ export class ImagesService {
   }
 
   async scaleImageWithSize(imageId: number, size: string) {
-    const { metaImage, imageFile } = await this.findOne(imageId);
+    const { metaImage, imageFile } = await this.getOne(imageId);
 
     const [widthText, heightText] = size.split('x');
     const width = Number(widthText);

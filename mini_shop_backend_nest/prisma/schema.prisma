@@ -67,6 +67,7 @@ model ProductImage {
   size			Int
   width			Int
   height		Int
+  isPrimary		Boolean @default(false)
   createdAt		DateTime @default(now())
 }
 

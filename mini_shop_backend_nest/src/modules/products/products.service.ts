@@ -65,10 +65,9 @@ export class ProductsService {
           productImages: {
             select: {
               id: true,
+              isPrimary: true,
             },
-            orderBy: {
-              createdAt: 'asc',
-            },
+            orderBy: [{ isPrimary: 'desc' }, { createdAt: 'asc' }],
             take: 1,
           },
         },
@@ -97,6 +96,9 @@ export class ProductsService {
           connect: { name: category },
         },
       },
+      include: {
+        category: true,
+      },
     });
     return product;
   }
@@ -124,6 +126,9 @@ export class ProductsService {
     const updatedProduct = this.prisma.product.update({
       where: { id },
       data,
+      include: {
+        category: true,
+      },
     });
     return updatedProduct;
   }

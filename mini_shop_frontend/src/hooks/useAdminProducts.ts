@@ -14,6 +14,19 @@ export interface AdminProduct {
     thumbnail: string;
 }
 
+export interface AdminProductImages {
+	id: number;
+	productId: number;
+	storageKey: string;
+	originalName: string;
+	mimeType: string;
+	size: number;
+	width: number;
+	height: number;
+	isPrimary: boolean;
+	createdAt: string;
+}
+
 interface AdminProductsResponse {
     items: AdminProduct[];
 }
@@ -23,6 +36,8 @@ const apiBaseUrl = '/api';
 const useAdminProducts = () => {
 	const [adminProducts, setAdminProducts] = useState<AdminProduct[]>([]);
 	const [adminProductsError, setAdminProductsError] = useState<string | null>(null);
+	const [selectedProductIdForImages, setSelectedProductIdForImages] = useState<number | null>(null);
+	const [selectedProductImages, setSelectedProductImages] = useState<AdminProductImages[]>([]);
 
 	useEffect(() => {
 		const loadAdminProducts = async () => {
@@ -97,12 +112,82 @@ const useAdminProducts = () => {
 		setAdminProducts((currentProducts) => currentProducts.filter((product) => product.id !== productId));
 	};
 
+	const updateAdminProduct = async (productId: number, payload: CreateAdminProductPayload, accessToken: string) => {
+		const response = await fetch(`${apiBaseUrl}/products/${productId}`, {
+			method: 'PUT',
+			headers: {
+				Authorization: `Bearer ${accessToken}`,
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify(payload),
+		});
+
+		if (!response.ok) throw new Error('Product update failed.');
+
+		const updatedProduct: AdminProduct = await response.json();
+
+		setAdminProducts((currentProducts) => currentProducts.map((product) => {
+			if (product.id === productId) return updatedProduct;
+
+			return product;
+		}));
+
+		return updatedProduct;
+	};
+
+	const loadProductImages = async (productId: number) => {
+		setSelectedProductIdForImages(productId);
+
+		const response = await fetch(`${apiBaseUrl}/images/products/${productId}`);
+
+		if (!response.ok) throw new Error('Product images load failed.');
+
+		const images: AdminProductImages[] = await response.json();
+
+		setSelectedProductImages(images);
+	};
+
+	const setPrimaryProductImage = async (imageId: number, accessToken: string) => {
+		const response = await fetch(`${apiBaseUrl}/images/${imageId}/primary`, {
+			method: 'PATCH',
+			headers: {
+				Authorization: `Bearer ${accessToken}`,
+			},
+		});
+
+		if (!response.ok) throw new Error('Set primary image failed.');
+
+		setSelectedProductImages((currentImages) => currentImages.map((image) => ({
+			...image,
+			isPrimary: image.id === imageId,
+		})));
+	};
+
+	const deleteAdminProductImage = async (imageId: number, accessToken: string) => {
+		const response = await fetch(`${apiBaseUrl}/images/${imageId}`, {
+			method: 'DELETE',
+			headers: {
+				Authorization: `Bearer ${accessToken}`,
+			},
+		});
+
+		if (!response.ok) throw new Error('Image delete failed.');
+
+		setSelectedProductImages((currentImages) => currentImages.filter((image) => image.id !== imageId));
+	};
+
 	return {
 		adminProducts,
 		adminProductsError,
 		createAdminProduct,
 		deleteAdminProduct,
 		uploadAdminProductImage,
+		updateAdminProduct,
+		selectedProductIdForImages,
+		selectedProductImages,
+		loadProductImages,
+		deleteAdminProductImage,
+		setPrimaryProductImage,
 	};
 };
 

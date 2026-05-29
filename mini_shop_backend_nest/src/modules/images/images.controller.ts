@@ -1,7 +1,9 @@
 import {
   Controller,
   Get,
+  Delete,
   Post,
+  Patch,
   Param,
   UploadedFile,
   UseInterceptors,
@@ -83,8 +85,86 @@ export class ImagesController {
     return this.imagesService.uploadProductImage(params.productId, file);
   }
 
-  /// --- SCALE_IMAGE ---
+  /// --- GET_PRODUCT_IMAGES --- ///
 
+  @ApiOperation({
+    summary: 'Get product images.',
+    description: 'Returns all images attached to the selected product.',
+  })
+  @ApiParam({
+    name: 'productId',
+    type: Number,
+    description: 'Product ID used to find attached images.',
+    example: 1,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Product images retrieved successfully.',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Product not found.',
+  })
+  @Get('/products/:productId')
+  async getProductImages(@Param('productId') productId: string) {
+    return this.imagesService.getProductImages(Number(productId));
+  }
+
+  /// --- SET_PRIMARY_IMAGE --- ///
+
+  @ApiOperation({
+    summary: 'Set product primary image.',
+    description:
+      'Marks the selected product image as primary. All other images attached to the same product are automatically marked as non-primary.',
+  })
+  @ApiParam({
+    name: 'imageId',
+    type: Number,
+    description: 'Image ID from the ProductImage table.',
+    example: 1,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Product primary image updated successfully.',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Image not found.',
+  })
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  @Patch(':imageId/primary')
+  async setPrimaryProductImage(@Param('imageId') imageId: string) {
+    return this.imagesService.setPrimaryProductImage(Number(imageId));
+  }
+
+  /// --- DELETE_IMAGE --- ///
+
+  @ApiOperation({
+    summary: 'Delete product image.',
+    description:
+      'Deletes a product image from object storage and removes its metadata from the database.',
+  })
+  @ApiParam({
+    name: 'imageId',
+    type: Number,
+    description: 'Image ID from the ProductImage table.',
+    example: 1,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Product image deleted successfully.',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Image not found.',
+  })
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  @Delete(':imageId')
+  async deleteProductImage(@Param('imageId') imageId: string) {
+    return this.imagesService.deleteProductImage(Number(imageId));
+  }
+
+  /// --- SCALE_IMAGE --- ///
   @ApiOperation({
     summary: 'Get resized product image.',
     description:
@@ -236,7 +316,7 @@ export class ImagesController {
     @Param() params: FindImageParamsDto,
     @Res() res: Response,
   ) {
-    const { metaImage, imageFile } = await this.imagesService.findOne(
+    const { metaImage, imageFile } = await this.imagesService.getOne(
       params.imageId,
     );
 
