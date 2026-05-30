@@ -56,6 +56,7 @@ const useProducts = () => {
 	const [selectedImage, setSelectedImage] = useState<string | null>(null);
 	const [activeCategory, setActiveCategory] = useState<string>('Toate');
 	const [totalPages, setTotalPages] = useState<number>(1);
+	const [productsReloadKey, setProductsReloadKey] = useState<number>(0);
 
 	useEffect(() => {
 		const timeoutId = setTimeout(() => {
@@ -102,7 +103,11 @@ const useProducts = () => {
 			setTotalPages(data.meta.totalPages);
 		};
 		loadProducts();
-	}, [currentPage, activeCategory, debouncedSearchQuery]);
+	}, [currentPage, activeCategory, debouncedSearchQuery, productsReloadKey]);
+
+	const reloadProducts = () => {
+		setProductsReloadKey((currentKey) => currentKey + 1);
+	};
 
 	const deleteProduct = async (productId: number, accessToken: string) => {
 		const response = await fetch(`${apiBaseUrl}/products/${productId}`, {
@@ -129,6 +134,7 @@ const useProducts = () => {
 		activeCategory,
 		setActiveCategory,
 		totalPages,
+		reloadProducts,
 		deleteProduct,
 	};
 };

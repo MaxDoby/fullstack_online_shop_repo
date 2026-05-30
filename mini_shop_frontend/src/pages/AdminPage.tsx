@@ -1,17 +1,24 @@
-import { useRef, useState, type SubmitEvent } from 'react';
+import {
+	Fragment,
+	useRef,
+	useState,
+	type SubmitEvent,
+} from 'react';
 import useAdminProducts from '../hooks/useAdminProducts';
 import useAdminProductForm from '../hooks/useAdminProductForm';
 
 interface AdminPageProps {
-    accessToken: string | null;
+	accessToken: string | null;
+	onProductsChanged: () => void;
 }
 
 const apiBaseUrl = '/api';
 
-const AdminPage = ({ accessToken }: AdminPageProps) => {
+const AdminPage = ({ accessToken, onProductsChanged }: AdminPageProps) => {
 	const fileInputRef = useRef<HTMLInputElement | null>(null);
 	const [previewImageId, setPreviewImageId] = useState<number | null>(null);
 	const [adminActionError, setAdminActionError] = useState<string | null>(null);
+	const [adminActionSuccess, setAdminActionSuccess] = useState<string | null>(null);
 	const {
 		adminProducts,
 		adminProductsError, deleteAdminProduct, createAdminProduct, uploadAdminProductImage, updateAdminProduct,
@@ -24,10 +31,19 @@ const AdminPage = ({ accessToken }: AdminPageProps) => {
 		handleInputChange, resetForm, getCreateProductPayload, handleFileChange, editingProductId, startEditingProduct,
 	} = useAdminProductForm();
 
-	const handleSetPrimaryProductImage = async (imageId: number) => {
+	const handlePrimaryImage = async (imageId: number) => {
 		if (!accessToken) return;
 
-		await setPrimaryProductImage(imageId, accessToken);
+		setAdminActionError(null);
+		setAdminActionSuccess(null);
+
+		try {
+			await setPrimaryProductImage(imageId, accessToken);
+			onProductsChanged();
+			setAdminActionSuccess('Primary image updated.');
+		} catch (error) {
+			setAdminActionError(error instanceof Error ? error.message : 'Primary image update failed.');
+		}
 	};
 
 	const handleDeleteProduct = async (productId: number) => {
@@ -43,8 +59,11 @@ const AdminPage = ({ accessToken }: AdminPageProps) => {
 
 		if (formData.imageFile) {
 			await uploadAdminProductImage(createdProduct.id, formData.imageFile, accessTokenValue);
+			await loadProductImages(createdProduct.id);
 		}
 
+		onProductsChanged();
+		setAdminActionSuccess('Product created.');
 		resetForm();
 	};
 
@@ -55,8 +74,11 @@ const AdminPage = ({ accessToken }: AdminPageProps) => {
 
 		if (formData.imageFile) {
 			await uploadAdminProductImage(productId, formData.imageFile, accessTokenValue);
+			await loadProductImages(productId);
 		}
 
+		onProductsChanged();
+		setAdminActionSuccess('Product updated.');
 		resetForm();
 	};
 
@@ -66,6 +88,7 @@ const AdminPage = ({ accessToken }: AdminPageProps) => {
 		if (!accessToken) return;
 
 		setAdminActionError(null);
+		setAdminActionSuccess(null);
 
 		try {
 			if (editingProductId) {
@@ -80,139 +103,198 @@ const AdminPage = ({ accessToken }: AdminPageProps) => {
 	};
 
 	const handleLoadProductImages = async (productId: number) => {
-		await loadProductImages(productId);
+		setAdminActionError(null);
+		setAdminActionSuccess(null);
+		setPreviewImageId(null);
+
+		if (selectedProductIdForImages === productId) {
+			await loadProductImages(null);
+			return;
+		}
+
+		try {
+			await loadProductImages(productId);
+		} catch (error) {
+			setAdminActionError(error instanceof Error ? error.message : 'Product images load failed.');
+		}
 	};
 
-	const handleDeleteProductImage = async (imageId: number) => {
+	const handleDeleteImage = async (imageId: number) => {
 		if (!accessToken) return;
 
-		await deleteAdminProductImage(imageId, accessToken);
+		setAdminActionError(null);
+		setAdminActionSuccess(null);
 
-		setPreviewImageId(null);
+		try {
+			await deleteAdminProductImage(imageId, accessToken);
+			onProductsChanged();
+			setPreviewImageId(null);
+			setAdminActionSuccess('Image deleted.');
+		} catch (error) {
+			setAdminActionError(error instanceof Error ? error.message : 'Image delete failed.');
+		}
 	};
 
 	return (
-		<main className="admin-page">
-			<h1>Admin Panel</h1>
-			<p>Gestionare produse, imagini si comenzi</p>
+		<>
+			<main className="admin-page">
+				<h1>Admin Panel</h1>
+				<p>Gestionare produse, imagini si comenzi</p>
 
-			{adminProductsError && <p>{adminProductsError}</p>}
-			{adminActionError && <p>{adminActionError}</p>}
+				{adminProductsError && <p>{adminProductsError}</p>}
+				{adminActionError && <p>{adminActionError}</p>}
+				{adminActionSuccess && <p>{adminActionSuccess}</p>}
 
-			<form className="admin-product-form" onSubmit={handleSubmitProductForm}>
-				<input name="title" value={formData.title} onChange={handleInputChange} placeholder="Title" />
+				<form className="admin-product-form" onSubmit={handleSubmitProductForm}>
+					<input name="title" value={formData.title} onChange={handleInputChange} placeholder="Title" />
 
-				<input name="description" value={formData.description} onChange={handleInputChange} placeholder="Description" />
+					<input name="description" value={formData.description} onChange={handleInputChange} placeholder="Description" />
 
-				<input name="price" type="number" value={formData.price} onChange={handleInputChange} placeholder="Price" />
+					<input name="price" type="number" value={formData.price} onChange={handleInputChange} placeholder="Price" />
 
-				<input name="stock" type="number" value={formData.stock} onChange={handleInputChange} placeholder="Stock" />
+					<input name="stock" type="number" value={formData.stock} onChange={handleInputChange} placeholder="Stock" />
 
-				<input name="category" value={formData.category} onChange={handleInputChange} placeholder="Category" />
+					<input name="category" value={formData.category} onChange={handleInputChange} placeholder="Category" />
 
-				<div className="admin-file-control">
-					<button type="button" className="admin-file-button" onClick={() => fileInputRef.current?.click()}>
-						Alegeti fisierul
-					</button>
-					<span className="admin-file-name">{formData.imageFile ? formData.imageFile.name : 'Niciun fisier ales'}</span>
-					<input ref={fileInputRef} name="imageFile" type="file" accept="image/*" onChange={handleFileChange} />
-				</div>
+					<div className="admin-file-control">
+						<button type="button" className="admin-file-button" onClick={() => fileInputRef.current?.click()}>
+							Alegeti fisierul
+						</button>
+						<span className="admin-file-name">{formData.imageFile ? formData.imageFile.name : 'Niciun fisier ales'}</span>
+						<input ref={fileInputRef} name="imageFile" type="file" accept="image/*" onChange={handleFileChange} />
+					</div>
 
-				<div className="admin-form-actions">
-					<button type="submit" className="btn-filter admin-create-button">
-						{editingProductId ? 'Update Product' : 'Create Product'}
-					</button>
+					<div className="admin-form-actions">
+						<button type="submit" className="btn-filter admin-create-button">
+							{editingProductId ? 'Update Product' : 'Create Product'}
+						</button>
 
-					{editingProductId && (
-					<button type="button" className="admin-cancel-button" onClick={resetForm}>
-						Cancel Edit
-					</button>
-                    )}
-				</div>
-			</form>
+						{editingProductId && (
+							<button type="button" className="admin-cancel-button" onClick={resetForm}>
+								Cancel Edit
+							</button>
+						)}
+					</div>
+				</form>
 
-			<table>
-				<thead>
-					<tr>
-						<th>ID</th>
-						<th>Title</th>
-						<th>Category</th>
-						<th>Price</th>
-						<th>Stock</th>
-						<th>Actions</th>
-					</tr>
-				</thead>
-
-				<tbody>
-					{adminProducts.map((product) => (
-						<tr key={product.id}>
-							<td>{product.id}</td>
-							<td>{product.title}</td>
-							<td>{product.category.name}</td>
-							<td>{product.price}</td>
-							<td>{product.stock}</td>
-							<td>
-								<button type="button" className="btn-filter" onClick={() => handleLoadProductImages(product.id)}>
-									Images
-								</button>
-								<button type="button" className="btn-filter" onClick={() => startEditingProduct(product)}>
-									Edit
-								</button>
-								<button type="button" className="btn-filter" onClick={() => handleDeleteProduct(product.id)}>
-									Delete
-								</button>
-							</td>
+				<table>
+					<thead>
+						<tr>
+							<th>ID</th>
+							<th>Title</th>
+							<th>Category</th>
+							<th>Price</th>
+							<th>Stock</th>
+							<th>Actions</th>
 						</tr>
-                    ))}
-				</tbody>
-			</table>
+					</thead>
 
-			{selectedProductIdForImages && (
-			<section className="admin-product-images">
-				<h2>Product Images #{selectedProductIdForImages}</h2>
+					<tbody>
+						{adminProducts.map((product) => (
+							<Fragment key={product.id}>
+								<tr>
+									<td>{product.id}</td>
+									<td>{product.title}</td>
+									<td>{product.category.name}</td>
+									<td>{product.price}</td>
+									<td>{product.stock}</td>
+									<td>
+										<button type="button" className="btn-filter" onClick={() => handleLoadProductImages(product.id)}>
+											Images
+										</button>
+										<button type="button" className="btn-filter" onClick={() => startEditingProduct(product)}>
+											Edit
+										</button>
+										<button type="button" className="btn-filter" onClick={() => handleDeleteProduct(product.id)}>
+											Delete
+										</button>
+									</td>
+								</tr>
 
-				{selectedProductImages.length === 0 ? (
-					<p>No images attached to this product.</p>
-                    ) : (
-	<div className="admin-product-images-grid">
-		{selectedProductImages.map((image) => (
-			<article key={image.id} className="admin-product-image-card">
-				<button type="button" className="admin-product-image-preview-button" onClick={() => setPreviewImageId(image.id)}>
-					<img src={`${apiBaseUrl}/images/${image.id}/120/90`} alt={image.originalName} />
-				</button>
+								{selectedProductIdForImages === product.id && (
+									<tr className="admin-product-images-row">
+										<td colSpan={6}>
+											<section className="admin-product-images">
+												<h2>Product Images #{selectedProductIdForImages}</h2>
 
-				<span>{image.originalName}</span>
+												{selectedProductImages.length === 0 ? (
+													<p>No images attached to this product.</p>
+												) : (
+													<div className="admin-product-images-grid">
+														{selectedProductImages.map((image) => (
+															<article key={image.id} className="admin-product-image-card">
+																<button
+																	type="button"
+																	className="admin-product-image-preview-button"
+																	onClick={() => setPreviewImageId(image.id)}
+																>
+																	<img src={`${apiBaseUrl}/images/${image.id}/120/90`} alt={image.originalName} />
+																</button>
 
-				{image.isPrimary && <span>Primary</span>}
+																<span className="admin-product-image-name">{image.originalName}</span>
 
-				<button
-					type="button"
-					className="btn-filter"
-					onClick={() => handleSetPrimaryProductImage(image.id)}
-					disabled={image.isPrimary}
-                                    >
-					Set primary
-				</button>
+																{image.isPrimary && <span className="admin-primary-badge">Primary</span>}
 
-				<button type="button" className="btn-filter" onClick={() => handleDeleteProductImage(image.id)}>
-					Delete
-				</button>
-			</article>
-                            ))}
-	</div>
-                    )}
+																<div className="admin-image-actions">
+																	<button
+																		type="button"
+																		className="btn-filter"
+																		onClick={() => handlePrimaryImage(image.id)}
+																		disabled={image.isPrimary}
+																	>
+																		Set primary
+																	</button>
 
-				{previewImageId && (
-				<div className="admin-image-preview">
-					<button type="button" className="admin-image-preview-close" onClick={() => setPreviewImageId(null)}>
-						Close
-					</button>
-					<img src={`${apiBaseUrl}/images/${previewImageId}/500/350`} alt="Selected product preview" />
+																	<button
+																		type="button"
+																		className="btn-filter admin-image-delete-button"
+																		onClick={() => handleDeleteImage(image.id)}
+																	>
+																		Delete
+																	</button>
+																</div>
+															</article>
+														))}
+													</div>
+												)}
+											</section>
+										</td>
+									</tr>
+								)}
+							</Fragment>
+						))}
+					</tbody>
+				</table>
+
+			</main>
+
+			{previewImageId && (
+				<div
+					role="button"
+					tabIndex={0}
+					className="admin-image-preview-overlay"
+					onClick={() => setPreviewImageId(null)}
+					onKeyDown={(event) => {
+						if (event.key === 'Enter' || event.key === 'Escape') {
+							setPreviewImageId(null);
+						}
+					}}
+					aria-label="Close image preview"
+				>
+					<div
+						role="presentation"
+						className="admin-image-preview"
+						onClick={(event) => event.stopPropagation()}
+						onKeyDown={(event) => event.stopPropagation()}
+					>
+						<button type="button" className="admin-image-preview-close" onClick={() => setPreviewImageId(null)}>
+							X
+						</button>
+						<img src={`${apiBaseUrl}/images/${previewImageId}/500/350`} alt="Selected product preview" />
+					</div>
 				</div>
-                    )}
-			</section>
-            )}
-		</main>
+			)}
+		</>
 	);
 };
 

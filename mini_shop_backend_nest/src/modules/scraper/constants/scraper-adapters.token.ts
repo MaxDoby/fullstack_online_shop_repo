@@ -1,0 +1,1 @@
+export const SCRAPER_ADAPTERS = Symbol('SCRAPER_ADAPTERS');

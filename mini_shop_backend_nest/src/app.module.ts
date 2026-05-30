@@ -9,6 +9,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { OrdersModule } from './modules/orders/orders.module';
 import { ImagesModule } from './modules/images/images.module';
 import { StorageModule } from './core/storage/storage.module';
+import { ScraperModule } from './modules/scraper/scraper.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { StorageModule } from './core/storage/storage.module';
     OrdersModule,
     ImagesModule,
     StorageModule,
+    ScraperModule,
   ],
   controllers: [AppController],
   providers: [AppService],

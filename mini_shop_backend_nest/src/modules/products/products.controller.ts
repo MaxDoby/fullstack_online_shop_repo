@@ -19,7 +19,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth/jwt-auth.guard';
 import { AdminGuard } from '../auth/guards/admin/admin.guard';
 
 @ApiTags('Products')
-@Controller('products')
+@Controller('product')
 export class ProductsController {
   constructor(private readonly productService: ProductsService) {}
 

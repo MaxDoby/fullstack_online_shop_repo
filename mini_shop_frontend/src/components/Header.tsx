@@ -8,10 +8,11 @@ interface HeaderProps {
 	authUsername: string | null;
 	openAdmin: () => void;
 	isAdmin: boolean;
+	scrollToTop: () => void;
 }
 
 const Header = ({
-	cartCount, openCart, openShop, openAuth, logout, isAuthenticated, authUsername, openAdmin, isAdmin,
+	cartCount, openCart, openShop, openAuth, logout, isAuthenticated, authUsername, openAdmin, isAdmin, scrollToTop,
 }: HeaderProps) => (
 	<header className="header">
 		<button type="button" className="logo-link header-reset-button" onClick={openShop}>
@@ -32,6 +33,10 @@ const Header = ({
 		</div>
 
 		<div className="auth-indicator">
+			<button type="button" className="btn-filter header-top-button" onClick={scrollToTop}>
+				Sus
+			</button>
+
 			{isAuthenticated ? (
 				<>
 					<span className="auth-user-name">{authUsername ? `Salut, ${authUsername}` : 'Cont activ'}</span>

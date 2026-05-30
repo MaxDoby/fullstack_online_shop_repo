@@ -37,6 +37,7 @@ const App = () => {
 		setSelectedImage,
 		setActiveCategory,
 		totalPages,
+		reloadProducts,
 	} = productsState;
 
 	const {
@@ -64,6 +65,10 @@ const App = () => {
 
 	const filterProducts = (cat: string) => {
 		logicFilterProducts(cat, setActiveCategory, setCurrentPage, setSearchQuery);
+	};
+
+	const scrollToTop = () => {
+		window.scrollTo({ top: 0, behavior: 'smooth' });
 	};
 
 	const handleCheckout = async () => {
@@ -114,7 +119,7 @@ const App = () => {
 
 	if (isAuthLoaded) {
 		if (authUser?.role === 'ADMIN') {
-			adminRouteElement = <AdminPage accessToken={accessToken} />;
+			adminRouteElement = <AdminPage accessToken={accessToken} onProductsChanged={reloadProducts} />;
 		} else {
 			adminRouteElement = <Navigate to="/products" replace />;
 		}
@@ -134,6 +139,7 @@ const App = () => {
 				authUsername={authUser?.username || null}
 				openAdmin={() => navigate('/admin')}
 				isAdmin={authUser?.role === 'ADMIN'}
+				scrollToTop={scrollToTop}
 			/>
 
 			<NewsTicker />

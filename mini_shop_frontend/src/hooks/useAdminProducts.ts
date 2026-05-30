@@ -135,7 +135,13 @@ const useAdminProducts = () => {
 		return updatedProduct;
 	};
 
-	const loadProductImages = async (productId: number) => {
+	const loadProductImages = async (productId: number | null) => {
+		if (productId === null) {
+			setSelectedProductIdForImages(null);
+			setSelectedProductImages([]);
+			return;
+		}
+
 		setSelectedProductIdForImages(productId);
 
 		const response = await fetch(`${apiBaseUrl}/images/products/${productId}`);

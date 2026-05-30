@@ -7,16 +7,22 @@ datasource db {
 }
 
 model Product {
-  id          	Int         @id @default(autoincrement())
-  title       	String
-  description 	String
-  price       	Float
-  stock      	Int
-  categoryId  	Int
-  category      Category    @relation(fields: [categoryId], references: [id])
-  thumbnail  	String
-  orderItems  	OrderItem[]
-  productImages ProductImage[]
+  id             Int            @id @default(autoincrement())
+  title          String
+  description    String
+  price          Float
+  stock          Int
+  categoryId     Int
+  category       Category       @relation(fields: [categoryId], references: [id])
+  thumbnail      String
+  orderItems     OrderItem[]
+  productImages  ProductImage[]
+  manufacturerId Int?
+  manufacturer   Manufacturer?  @relation(fields: [manufacturerId], references: [id])
+
+  specificationGroups ProductSpecificationGroup[]
+  variants            ProductVariant[]
+  sources             ProductSource[]
 }
 
 model Category {
@@ -35,7 +41,7 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   orders    Order[]
-  role 		UserRole @default(USER)
+  role      UserRole @default(USER)
 }
 
 model Order {
@@ -58,20 +64,101 @@ model OrderItem {
 }
 
 model ProductImage {
-  id			Int		@id @default(autoincrement())
-  productId		Int
-  product		Product @relation(fields: [productId], references: [id])
-  storageKey	String
-  originalName 	String
-  mimeType		String
-  size			Int
-  width			Int
-  height		Int
-  isPrimary		Boolean @default(false)
-  createdAt		DateTime @default(now())
+  id           Int      @id @default(autoincrement())
+  productId    Int
+  product      Product  @relation(fields: [productId], references: [id])
+  storageKey   String
+  originalName String
+  mimeType     String
+  size         Int
+  width        Int
+  height       Int
+  isPrimary    Boolean  @default(false)
+  createdAt    DateTime @default(now())
 }
 
 enum UserRole {
-	USER
-	ADMIN
+  USER
+  ADMIN
+}
+
+/// ---SCRAPPER
+
+model Manufacturer {
+  id       Int       @id @default(autoincrement())
+  name     String    @unique
+  slug     String    @unique
+  products Product[]
+}
+
+model ProductSpecificationGroup {
+  id             Int                    @id @default(autoincrement())
+  productId      Int
+  product        Product                @relation(fields: [productId], references: [id])
+  name           String
+  order          Int?
+  specifications ProductSpecification[]
+}
+
+model ProductSpecification {
+  id      Int                       @id @default(autoincrement())
+  groupId Int
+  group   ProductSpecificationGroup @relation(fields: [groupId], references: [id])
+  name    String
+  value   String
+  unit    String?
+}
+
+model ProductVariant {
+  id        Int     @id @default(autoincrement())
+  productId Int
+  product   Product @relation(fields: [productId], references: [id])
+  name      String
+  value     String
+}
+
+model ScrapeJob {
+  id             Int             @id @default(autoincrement())
+  sourceWebsite  String
+  sourceBaseUrl  String
+  manufacturer   String?
+  productType    String?
+  searchText     String?
+  minPrice       Float?
+  maxPrice       Float?
+  status         ScrapeJobStatus @default(PENDING)
+  totalFound     Int             @default(0)
+  totalImported  Int             @default(0)
+  totalUpdated   Int             @default(0)
+  totalFailed    Int             @default(0)
+  errorMessage   String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  finishedAt     DateTime?
+  productSources ProductSource[]
+}
+
+model ProductSource {
+  id                  Int        @id @default(autoincrement())
+  productId           Int
+  product             Product    @relation(fields: [productId], references: [id])
+  scrapeJobId         Int?
+  scrapeJob           ScrapeJob? @relation(fields: [scrapeJobId], references: [id])
+  sourceWebsite       String
+  sourceUrl           String
+  externalProductCode String?
+  externalArticle     String?
+  externalId          String?
+  externalHash        String?
+  lastScrapedAt       DateTime   @default(now())
+
+  @@unique([sourceWebsite, sourceUrl])
+}
+
+enum ScrapeJobStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELED
 }
