@@ -11,13 +11,21 @@ export class StorageService {
   private readonly s3Client: S3Client;
 
   constructor() {
+    const endpoint = process.env.S3_ENDPOINT;
+    const accessKeyId = process.env.S3_ACCESS_KEY;
+    const secretAccessKey = process.env.S3_SECRET_KEY;
+
     this.s3Client = new S3Client({
-      endpoint: process.env.S3_ENDPOINT!,
+      ...(endpoint ? { endpoint } : {}),
       region: process.env.S3_REGION!,
-      credentials: {
-        accessKeyId: process.env.S3_ACCESS_KEY!,
-        secretAccessKey: process.env.S3_SECRET_KEY!,
-      },
+      ...(accessKeyId && secretAccessKey
+        ? {
+            credentials: {
+              accessKeyId,
+              secretAccessKey,
+            },
+          }
+        : {}),
       forcePathStyle: process.env.S3_FORCE_PATH_STYLE === 'true',
     });
   }

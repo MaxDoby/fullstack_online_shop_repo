@@ -1,12 +1,24 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../core/prisma/prisma.service';
 import type { NormalizedProduct } from '../interfaces/normalized-product.interface';
+import { ProductMetadataScrapeImporter } from './product-metadata-scrape.importer';
+
+export interface ProductScrapeImportResult {
+  productId: number;
+  action: 'created' | 'updated';
+}
 
 @Injectable()
 export class ProductScrapeImporter {
-  public constructor(private readonly prisma: PrismaService) {}
+  public constructor(
+    private readonly prisma: PrismaService,
+    private readonly productMetadataScrapeImporter: ProductMetadataScrapeImporter,
+  ) {}
 
-  public async importProduct(product: NormalizedProduct, scrapeJobId: number) {
+  public async importProduct(
+    product: NormalizedProduct,
+    scrapeJobId: number,
+  ): Promise<ProductScrapeImportResult> {
     const category = await this.prisma.category.upsert({
       where: { name: product.categoryName },
       update: {},
@@ -14,14 +26,7 @@ export class ProductScrapeImporter {
     });
 
     const manufacturer = product.manufacturerName
-      ? await this.prisma.manufacturer.upsert({
-          where: { name: product.manufacturerName },
-          update: {},
-          create: {
-            name: product.manufacturerName,
-            slug: this.createSlug(product.manufacturerName),
-          },
-        })
+      ? await this.findOrCreateManufacturer(product.manufacturerName)
       : null;
 
     const existingSource = await this.prisma.productSource.findUnique({
@@ -79,7 +84,39 @@ export class ProductScrapeImporter {
       },
     });
 
-    return savedProduct;
+    await this.productMetadataScrapeImporter.importMetadata(
+      savedProduct.id,
+      product,
+    );
+
+    return {
+      productId: savedProduct.id,
+      action: existingSource ? 'updated' : 'created',
+    };
+  }
+
+  private async findOrCreateManufacturer(manufacturerName: string) {
+    const normalizedName = this.normalizeManufacturerName(manufacturerName);
+    const slug = this.createSlug(normalizedName);
+
+    const existingManufacturer = await this.prisma.manufacturer.findFirst({
+      where: {
+        OR: [{ name: normalizedName }, { slug }],
+      },
+    });
+
+    if (existingManufacturer) return existingManufacturer;
+
+    return this.prisma.manufacturer.create({
+      data: {
+        name: normalizedName,
+        slug,
+      },
+    });
+  }
+
+  private normalizeManufacturerName(value: string): string {
+    return value.trim().replace(/[.]+$/g, '').trim();
   }
 
   private createSlug(value: string): string {

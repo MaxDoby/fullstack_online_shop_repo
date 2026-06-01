@@ -19,45 +19,51 @@ interface ProductsPageProps {
 	};
 }
 
-const ProductsPage = ({ filters, productsView, pagination }: ProductsPageProps) => (
-	<div className="main-layout">
-		<aside className="sidebar">
-			<h3 className="sidebar-title">Categorii</h3>
-			<FilterNav categories={filters.categories} filterProducts={filters.filterProducts} />
-		</aside>
+const ProductsPage = ({ filters, productsView, pagination }: ProductsPageProps) => {
+	const goToPage = (page: number) => {
+		pagination.setCurrentPage(page);
+		window.scrollTo({ top: 0, behavior: 'smooth' });
+	};
+	return (
+		<div className="main-layout">
+			<aside className="sidebar">
+				<h3 className="sidebar-title">Categorii</h3>
+				<FilterNav categories={filters.categories} filterProducts={filters.filterProducts} />
+			</aside>
 
-		<main className="content-area">
-			<ProductsOnPage
-				productsToShow={productsView.products}
-				addToCart={productsView.addToCart}
-				setSelectedImage={productsView.setSelectedImage}
+			<main className="content-area">
+				<ProductsOnPage
+					productsToShow={productsView.products}
+					addToCart={productsView.addToCart}
+					setSelectedImage={productsView.setSelectedImage}
 			/>
 
-			<div className="pagination-container">
-				<button
-					type="button"
-					className="btn-filter"
-					onClick={() => pagination.setCurrentPage(pagination.currentPage - 1)}
-					disabled={pagination.currentPage === 1}
+				<div className="pagination-container">
+					<button
+						type="button"
+						className="btn-filter"
+						onClick={() => goToPage(pagination.currentPage - 1)}
+						disabled={pagination.currentPage === 1}
 				>
-					Inapoi
-				</button>
+						Inapoi
+					</button>
 
-				<span className="page-info">
-					Pagina {pagination.currentPage} din {pagination.totalPages || 1}
-				</span>
+					<span className="page-info">
+						Pagina {pagination.currentPage} din {pagination.totalPages || 1}
+					</span>
 
-				<button
-					type="button"
-					className="btn-filter"
-					onClick={() => pagination.setCurrentPage(pagination.currentPage + 1)}
-					disabled={pagination.currentPage === pagination.totalPages}
+					<button
+						type="button"
+						className="btn-filter"
+						onClick={() => goToPage(pagination.currentPage + 1)}
+						disabled={pagination.currentPage === pagination.totalPages}
 				>
-					Inainte
-				</button>
-			</div>
-		</main>
-	</div>
-);
+						Inainte
+					</button>
+				</div>
+			</main>
+		</div>
+	);
+};
 
 export default ProductsPage;

@@ -6,6 +6,7 @@ import { SCRAPER_ADAPTERS } from './constants/scraper-adapters.token';
 import { UltraScraperAdapter } from './adapters/ultra/ultra-scraper.adapter';
 import { ProductScrapeNormalizer } from './normalizers/product-scrape.normalizer';
 import { ProductScrapeImporter } from './importers/product-scrape.importer';
+import { ProductMetadataScrapeImporter } from './importers/product-metadata-scrape.importer';
 import { AuthModule } from '../auth/auth.module';
 import { ScraperHttpClient } from './http/scraper-http.client';
 
@@ -18,6 +19,7 @@ import { ScraperHttpClient } from './http/scraper-http.client';
     UltraScraperAdapter,
     ProductScrapeNormalizer,
     ProductScrapeImporter,
+    ProductMetadataScrapeImporter,
     ScraperHttpClient,
     {
       provide: SCRAPER_ADAPTERS,

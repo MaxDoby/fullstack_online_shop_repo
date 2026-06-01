@@ -42,7 +42,7 @@ const useAdminProducts = () => {
 	useEffect(() => {
 		const loadAdminProducts = async () => {
 			try {
-				const response = await fetch(`${apiBaseUrl}/products?page=1&limit=100`);
+				const response = await fetch(`${apiBaseUrl}/product?page=1&limit=100`);
 
 				if (!response.ok) {
 					throw new Error('Unable to load admin products.');
@@ -60,7 +60,7 @@ const useAdminProducts = () => {
 	}, []);
 
 	const createAdminProduct = async (payload: CreateAdminProductPayload, accessToken: string) => {
-		const response = await fetch(`${apiBaseUrl}/products`, {
+		const response = await fetch(`${apiBaseUrl}/product`, {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
@@ -84,7 +84,7 @@ const useAdminProducts = () => {
 		const formData = new FormData();
 		formData.append('file', imageFile);
 
-		const response = await fetch(`${apiBaseUrl}/images/products/${productId}`, {
+		const response = await fetch(`${apiBaseUrl}/images/product/${productId}`, {
 			method: 'POST',
 			headers: {
 				Authorization: `Bearer ${accessToken}`,
@@ -98,7 +98,7 @@ const useAdminProducts = () => {
 	};
 
 	const deleteAdminProduct = async (productId: number, accessToken: string) => {
-		const response = await fetch(`${apiBaseUrl}/products/${productId}`, {
+		const response = await fetch(`${apiBaseUrl}/product/${productId}`, {
 			method: 'DELETE',
 			headers: {
 				Authorization: `Bearer ${accessToken}`,
@@ -113,7 +113,7 @@ const useAdminProducts = () => {
 	};
 
 	const updateAdminProduct = async (productId: number, payload: CreateAdminProductPayload, accessToken: string) => {
-		const response = await fetch(`${apiBaseUrl}/products/${productId}`, {
+		const response = await fetch(`${apiBaseUrl}/product/${productId}`, {
 			method: 'PUT',
 			headers: {
 				Authorization: `Bearer ${accessToken}`,
@@ -144,7 +144,7 @@ const useAdminProducts = () => {
 
 		setSelectedProductIdForImages(productId);
 
-		const response = await fetch(`${apiBaseUrl}/images/products/${productId}`);
+		const response = await fetch(`${apiBaseUrl}/images/product/${productId}`);
 
 		if (!response.ok) throw new Error('Product images load failed.');
 

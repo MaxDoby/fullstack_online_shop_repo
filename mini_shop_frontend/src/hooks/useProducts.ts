@@ -34,7 +34,7 @@ interface ProductsResponse {
 	meta: ProductPageMeta;
 }
 
-const productsOnPage = 8;
+const productsOnPage = 16;
 const searchDebounceMs = 500;
 
 const apiBaseUrl = '/api';
@@ -91,7 +91,7 @@ const useProducts = () => {
 			}
 
 			if (activeCategory !== 'Toate') params.set('category', activeCategory);
-			const response = await fetch(`${apiBaseUrl}/products?${params.toString()}`);
+			const response = await fetch(`${apiBaseUrl}/product?${params.toString()}`);
 			const data: ProductsResponse = await response.json();
 
 			const productsWithImageUrl = data.items.map((product) => ({
@@ -110,7 +110,7 @@ const useProducts = () => {
 	};
 
 	const deleteProduct = async (productId: number, accessToken: string) => {
-		const response = await fetch(`${apiBaseUrl}/products/${productId}`, {
+		const response = await fetch(`${apiBaseUrl}/product/${productId}`, {
 			method: 'DELETE',
 			headers: {
 				Authorization: `Bearer ${accessToken}`,

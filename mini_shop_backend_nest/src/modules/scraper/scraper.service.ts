@@ -43,21 +43,33 @@ export class ScraperService {
         this.productScrapeNormalizer.normalize(rawProduct),
       );
 
-      const importedProducts = await Promise.all(
-        normalizedProducts.map((normalizedProduct) =>
-          this.productScrapeImporter.importProduct(
-            normalizedProduct,
-            scrapeJob.id,
-          ),
-        ),
-      );
+      const importedProducts: Awaited<
+        ReturnType<typeof this.productScrapeImporter.importProduct>
+      >[] = [];
+
+      for (const normalizedProduct of normalizedProducts) {
+        const importedProduct = await this.productScrapeImporter.importProduct(
+          normalizedProduct,
+          scrapeJob.id,
+        );
+
+        importedProducts.push(importedProduct);
+      }
+
+      const totalImported = importedProducts.filter(
+        (importedProduct) => importedProduct.action === 'created',
+      ).length;
+      const totalUpdated = importedProducts.filter(
+        (importedProduct) => importedProduct.action === 'updated',
+      ).length;
 
       return this.prisma.scrapeJob.update({
         where: { id: scrapeJob.id },
         data: {
           status: ScrapeJobStatus.COMPLETED,
           totalFound: normalizedProducts.length,
-          totalImported: importedProducts.length,
+          totalImported,
+          totalUpdated,
           finishedAt: new Date(),
         },
       });
@@ -77,6 +89,7 @@ export class ScraperService {
   public findAllJobs() {
     return this.prisma.scrapeJob.findMany({
       orderBy: { createdAt: 'desc' },
+      take: 50,
     });
   }
 

@@ -13,7 +13,7 @@ export class ProductsService {
 
   async getAllProducts(query: GetProductsQueryDto) {
     const page = query.page ?? 1;
-    const limit = query.limit ?? 8;
+    const limit = query.limit ?? 16;
     const sortBy = query.sortBy ?? 'id';
     const sortOrder = query.sortOrder ?? 'asc';
     const skip = (page - 1) * limit;
@@ -62,6 +62,7 @@ export class ProductsService {
         orderBy: { [sortBy]: sortOrder },
         include: {
           category: true,
+          manufacturer: true,
           productImages: {
             select: {
               id: true,
@@ -82,6 +83,27 @@ export class ProductsService {
   async getProductById(id: number) {
     const product = await this.prisma.product.findUnique({
       where: { id },
+      include: {
+        category: true,
+        manufacturer: true,
+        productImages: {
+          orderBy: [{ isPrimary: 'desc' }, { createdAt: 'asc' }],
+        },
+        specificationGroups: {
+          orderBy: [{ order: 'asc' }, { id: 'asc' }],
+          include: {
+            specifications: {
+              orderBy: { id: 'asc' },
+            },
+          },
+        },
+        variants: {
+          orderBy: { id: 'asc' },
+        },
+        sources: {
+          orderBy: { lastScrapedAt: 'desc' },
+        },
+      },
     });
     if (!product) throw new NotFoundException('Product not found by id.');
     return product;
