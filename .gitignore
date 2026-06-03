@@ -32,3 +32,13 @@ dist-ssr
 .env
 .env.*
 !.env.example
+
+# Private local notes and generated learning materials
+/AGENTS.md
+/PROJECT_CONTEXT.md
+/TASK_PLAN.md
+/SCRAPER_PROGRESS_NOTES.md
+/ADMIN_UI_NOTES.md
+/ADMIN_PANEL_PLAN.md
+/docs/
+/scripts/

@@ -9,6 +9,9 @@ import {
   UseInterceptors,
   Res,
   UseGuards,
+  ParseFilePipe,
+  MaxFileSizeValidator,
+  FileTypeValidator,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth/jwt-auth.guard';
 import { AdminGuard } from '../auth/guards/admin/admin.guard';
@@ -80,7 +83,16 @@ export class ImagesController {
   @UseInterceptors(FileInterceptor('file'))
   uploadProductImage(
     @Param() params: UploadProductImageParamsDto,
-    @UploadedFile() file: Express.Multer.File,
+    @UploadedFile(
+      new ParseFilePipe({
+        fileIsRequired: true,
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }),
+          new FileTypeValidator({ fileType: /^image\/(jpeg|png|webp)$/ }),
+        ],
+      }),
+    )
+    file: Express.Multer.File,
   ) {
     return this.imagesService.uploadProductImage(params.productId, file);
   }

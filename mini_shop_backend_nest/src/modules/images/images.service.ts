@@ -23,11 +23,6 @@ export class ImagesService {
 
     if (!product) throw new NotFoundException('Product not found.');
 
-    if (!file) throw new BadRequestException('Image file is required.');
-
-    if (!file.mimetype.startsWith('image/'))
-      throw new BadRequestException('Only image files are accepted.');
-
     const safeFileName = file.originalname.replace(/\s+/g, '-');
     const storageKey = `products/${productId}/${Date.now()}-${safeFileName}`;
     const metadata = await sharp(file.buffer).metadata();
