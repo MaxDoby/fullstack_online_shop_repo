@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../core/prisma/prisma.service';
 import type { NormalizedProduct } from '../interfaces/normalized-product.interface';
 import { ProductMetadataScrapeImporter } from './product-metadata-scrape.importer';
+import { ProductImageScrapeImporter } from './product-image-scrape.importer';
+import { SCRAPED_CATEGORY_MAP } from '../constants/scraped-category-map';
 
 export interface ProductScrapeImportResult {
   productId: number;
@@ -13,17 +15,22 @@ export class ProductScrapeImporter {
   public constructor(
     private readonly prisma: PrismaService,
     private readonly productMetadataScrapeImporter: ProductMetadataScrapeImporter,
+    private readonly productImageScrapeImporter: ProductImageScrapeImporter,
   ) {}
 
   public async importProduct(
     product: NormalizedProduct,
     scrapeJobId: number,
   ): Promise<ProductScrapeImportResult> {
-    const category = await this.prisma.category.upsert({
-      where: { name: product.categoryName },
-      update: {},
-      create: { name: product.categoryName },
+    const categoryName = this.getExistingCategoryName(product.categoryName);
+
+    const category = await this.prisma.category.findUnique({
+      where: { name: categoryName },
     });
+
+    if (!category) {
+      throw new Error(`Category "${categoryName}" does not exist.`);
+    }
 
     const manufacturer = product.manufacturerName
       ? await this.findOrCreateManufacturer(product.manufacturerName)
@@ -46,6 +53,7 @@ export class ProductScrapeImporter {
       thumbnail: product.thumbnail,
       categoryId: category.id,
       manufacturerId: manufacturer?.id,
+      deletedAt: null,
     };
 
     const savedProduct = existingSource
@@ -89,10 +97,21 @@ export class ProductScrapeImporter {
       product,
     );
 
+    await this.productImageScrapeImporter.importProductImages(
+      savedProduct.id,
+      product.images,
+    );
+
     return {
       productId: savedProduct.id,
       action: existingSource ? 'updated' : 'created',
     };
+  }
+
+  private getExistingCategoryName(scrapedCategoryName: string): string {
+    const normalizedCategoryName = scrapedCategoryName.trim().toLowerCase();
+
+    return SCRAPED_CATEGORY_MAP[normalizedCategoryName] ?? scrapedCategoryName;
   }
 
   private async findOrCreateManufacturer(manufacturerName: string) {

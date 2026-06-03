@@ -6,6 +6,7 @@ import {
 } from 'react';
 import useAdminProducts from '../hooks/useAdminProducts';
 import useAdminProductForm from '../hooks/useAdminProductForm';
+import AdminScraperPanel from '../components/AdminScraperPanel';
 
 interface AdminPageProps {
 	accessToken: string | null;
@@ -16,20 +17,40 @@ const apiBaseUrl = '/api';
 
 const AdminPage = ({ accessToken, onProductsChanged }: AdminPageProps) => {
 	const fileInputRef = useRef<HTMLInputElement | null>(null);
+	const adminProductsTableRef = useRef<HTMLTableElement | null>(null);
 	const [previewImageId, setPreviewImageId] = useState<number | null>(null);
 	const [adminActionError, setAdminActionError] = useState<string | null>(null);
 	const [adminActionSuccess, setAdminActionSuccess] = useState<string | null>(null);
+	const [selectedProductIds, setSelectedProductIds] = useState<number[]>([]);
 	const {
 		adminProducts,
 		adminProductsError, deleteAdminProduct, createAdminProduct, uploadAdminProductImage, updateAdminProduct,
 		selectedProductIdForImages, selectedProductImages, loadProductImages,
 		deleteAdminProductImage, setPrimaryProductImage,
+		adminProductsPage, adminProductsTotalPages, setAdminProductsPage, reloadAdminProducts,
 	} = useAdminProducts();
 
 	const {
 		formData,
 		handleInputChange, resetForm, getCreateProductPayload, handleFileChange, editingProductId, startEditingProduct,
 	} = useAdminProductForm();
+
+	const handleProductsChanged = () => {
+		reloadAdminProducts();
+		onProductsChanged();
+	};
+
+	const handleAdminProductsPageChange = (page: number) => {
+		setAdminProductsPage(page);
+		setSelectedProductIds([]);
+		const tableTop = adminProductsTableRef.current?.getBoundingClientRect().top ?? 0;
+		const scrollTarget = window.scrollY + tableTop - 140;
+
+		window.scrollTo({
+			top: scrollTarget,
+			behavior: 'smooth',
+		});
+	};
 
 	const handlePrimaryImage = async (imageId: number) => {
 		if (!accessToken) return;
@@ -39,7 +60,7 @@ const AdminPage = ({ accessToken, onProductsChanged }: AdminPageProps) => {
 
 		try {
 			await setPrimaryProductImage(imageId, accessToken);
-			onProductsChanged();
+			handleProductsChanged();
 			setAdminActionSuccess('Primary image updated.');
 		} catch (error) {
 			setAdminActionError(error instanceof Error ? error.message : 'Primary image update failed.');
@@ -52,6 +73,33 @@ const AdminPage = ({ accessToken, onProductsChanged }: AdminPageProps) => {
 		await deleteAdminProduct(productId, accessToken);
 	};
 
+	const handleToggleProductSelection = (productId: number) => {
+		setSelectedProductIds((currentIds) => {
+			if (currentIds.includes(productId)) {
+				return currentIds.filter((id) => id !== productId);
+			}
+
+			return [...currentIds, productId];
+		});
+	};
+
+	const handleDeleteSelectedProducts = async () => {
+		if (!accessToken || selectedProductIds.length === 0) return;
+
+		setAdminActionError(null);
+		setAdminActionSuccess(null);
+
+		try {
+			await Promise.all(selectedProductIds.map((productId) => deleteAdminProduct(productId, accessToken)));
+
+			setSelectedProductIds([]);
+			handleProductsChanged();
+			setAdminActionSuccess('Selected products deleted.');
+		} catch (error) {
+			setAdminActionError(error instanceof Error ? error.message : 'Selected products delete failed.');
+		}
+	};
+
 	const handleCreateProduct = async (accessTokenValue: string) => {
 		const payload = getCreateProductPayload();
 
@@ -62,7 +110,7 @@ const AdminPage = ({ accessToken, onProductsChanged }: AdminPageProps) => {
 			await loadProductImages(createdProduct.id);
 		}
 
-		onProductsChanged();
+		handleProductsChanged();
 		setAdminActionSuccess('Product created.');
 		resetForm();
 	};
@@ -77,7 +125,7 @@ const AdminPage = ({ accessToken, onProductsChanged }: AdminPageProps) => {
 			await loadProductImages(productId);
 		}
 
-		onProductsChanged();
+		handleProductsChanged();
 		setAdminActionSuccess('Product updated.');
 		resetForm();
 	};
@@ -127,7 +175,7 @@ const AdminPage = ({ accessToken, onProductsChanged }: AdminPageProps) => {
 
 		try {
 			await deleteAdminProductImage(imageId, accessToken);
-			onProductsChanged();
+			handleProductsChanged();
 			setPreviewImageId(null);
 			setAdminActionSuccess('Image deleted.');
 		} catch (error) {
@@ -145,6 +193,9 @@ const AdminPage = ({ accessToken, onProductsChanged }: AdminPageProps) => {
 				{adminActionError && <p>{adminActionError}</p>}
 				{adminActionSuccess && <p>{adminActionSuccess}</p>}
 
+				<AdminScraperPanel accessToken={accessToken} onProductsChanged={handleProductsChanged} />
+
+				<h2>Creati sau modificati un produs.</h2>
 				<form className="admin-product-form" onSubmit={handleSubmitProductForm}>
 					<input name="title" value={formData.title} onChange={handleInputChange} placeholder="Title" />
 
@@ -170,16 +221,51 @@ const AdminPage = ({ accessToken, onProductsChanged }: AdminPageProps) => {
 						</button>
 
 						{editingProductId && (
-							<button type="button" className="admin-cancel-button" onClick={resetForm}>
-								Cancel Edit
-							</button>
-						)}
+						<button type="button" className="admin-cancel-button" onClick={resetForm}>
+							Cancel Edit
+						</button>
+                        )}
 					</div>
 				</form>
 
-				<table>
+				<div className="admin-bulk-actions">
+					<button
+						type="button"
+						className="btn-filter"
+						onClick={() => handleAdminProductsPageChange(adminProductsPage - 1)}
+						disabled={adminProductsPage === 1}
+                    >
+						Inapoi
+					</button>
+
+					<span className="page-info">
+						Pagina {adminProductsPage} din {adminProductsTotalPages || 1}
+					</span>
+
+					<button
+						type="button"
+						className="btn-filter"
+						onClick={() => handleAdminProductsPageChange(adminProductsPage + 1)}
+						disabled={adminProductsPage === adminProductsTotalPages}
+                    >
+						Inainte
+					</button>
+					<span>{selectedProductIds.length}/10 selected</span>
+
+					<button
+						type="button"
+						className="btn-filter admin-bulk-delete-button"
+						onClick={handleDeleteSelectedProducts}
+						disabled={selectedProductIds.length === 0}
+                    >
+						Delete selected
+					</button>
+				</div>
+
+				<table ref={adminProductsTableRef}>
 					<thead>
 						<tr>
+							<th>Select</th>
 							<th>ID</th>
 							<th>Title</th>
 							<th>Category</th>
@@ -193,6 +279,15 @@ const AdminPage = ({ accessToken, onProductsChanged }: AdminPageProps) => {
 						{adminProducts.map((product) => (
 							<Fragment key={product.id}>
 								<tr>
+									<td>
+										<input
+											type="checkbox"
+											aria-label={`Select product ${product.id}`}
+											checked={selectedProductIds.includes(product.id)}
+											onChange={() => handleToggleProductSelection(product.id)}
+											disabled={!selectedProductIds.includes(product.id) && selectedProductIds.length >= 10}
+                                        />
+									</td>
 									<td>{product.id}</td>
 									<td>{product.title}</td>
 									<td>{product.category.name}</td>
@@ -212,87 +307,110 @@ const AdminPage = ({ accessToken, onProductsChanged }: AdminPageProps) => {
 								</tr>
 
 								{selectedProductIdForImages === product.id && (
-									<tr className="admin-product-images-row">
-										<td colSpan={6}>
-											<section className="admin-product-images">
-												<h2>Product Images #{selectedProductIdForImages}</h2>
+								<tr className="admin-product-images-row">
+									<td colSpan={7}>
+										<section className="admin-product-images">
+											<h2>Product Images #{selectedProductIdForImages}</h2>
 
-												{selectedProductImages.length === 0 ? (
-													<p>No images attached to this product.</p>
-												) : (
-													<div className="admin-product-images-grid">
-														{selectedProductImages.map((image) => (
-															<article key={image.id} className="admin-product-image-card">
-																<button
-																	type="button"
-																	className="admin-product-image-preview-button"
-																	onClick={() => setPreviewImageId(image.id)}
-																>
-																	<img src={`${apiBaseUrl}/images/${image.id}/120/90`} alt={image.originalName} />
-																</button>
+											{selectedProductImages.length === 0 ? (
+												<p>No images attached to this product.</p>
+                                                ) : (
+	<div className="admin-product-images-grid">
+		{selectedProductImages.map((image) => (
+			<article key={image.id} className="admin-product-image-card">
+				<button
+					type="button"
+					className="admin-product-image-preview-button"
+					onClick={() => setPreviewImageId(image.id)}
+                                                                >
+					<img src={`${apiBaseUrl}/images/${image.id}/120/90`} alt={image.originalName} />
+				</button>
 
-																<span className="admin-product-image-name">{image.originalName}</span>
+				<span className="admin-product-image-name">{image.originalName}</span>
 
-																{image.isPrimary && <span className="admin-primary-badge">Primary</span>}
+				{image.isPrimary && <span className="admin-primary-badge">Primary</span>}
 
-																<div className="admin-image-actions">
-																	<button
-																		type="button"
-																		className="btn-filter"
-																		onClick={() => handlePrimaryImage(image.id)}
-																		disabled={image.isPrimary}
-																	>
-																		Set primary
-																	</button>
+				<div className="admin-image-actions">
+					<button
+						type="button"
+						className="btn-filter"
+						onClick={() => handlePrimaryImage(image.id)}
+						disabled={image.isPrimary}
+                                                                    >
+						Set primary
+					</button>
 
-																	<button
-																		type="button"
-																		className="btn-filter admin-image-delete-button"
-																		onClick={() => handleDeleteImage(image.id)}
-																	>
-																		Delete
-																	</button>
-																</div>
-															</article>
-														))}
-													</div>
-												)}
-											</section>
-										</td>
-									</tr>
-								)}
+					<button
+						type="button"
+						className="btn-filter admin-image-delete-button"
+						onClick={() => handleDeleteImage(image.id)}
+                                                                    >
+						Delete
+					</button>
+				</div>
+			</article>
+                                                        ))}
+	</div>
+                                                )}
+										</section>
+									</td>
+								</tr>
+                                )}
 							</Fragment>
-						))}
+                        ))}
 					</tbody>
 				</table>
 
+				<div className="pagination-container admin-products-pagination">
+					<button
+						type="button"
+						className="btn-filter"
+						onClick={() => handleAdminProductsPageChange(adminProductsPage - 1)}
+						disabled={adminProductsPage === 1}
+                    >
+						Inapoi
+					</button>
+
+					<span className="page-info">
+						Pagina {adminProductsPage} din {adminProductsTotalPages || 1}
+					</span>
+
+					<button
+						type="button"
+						className="btn-filter"
+						onClick={() => handleAdminProductsPageChange(adminProductsPage + 1)}
+						disabled={adminProductsPage === adminProductsTotalPages}
+                    >
+						Inainte
+					</button>
+				</div>
 			</main>
 
 			{previewImageId && (
+			<div
+				role="button"
+				tabIndex={0}
+				className="admin-image-preview-overlay"
+				onClick={() => setPreviewImageId(null)}
+				onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === 'Escape') {
+                            setPreviewImageId(null);
+                        }
+                    }}
+				aria-label="Close image preview"
+                >
 				<div
-					role="button"
-					tabIndex={0}
-					className="admin-image-preview-overlay"
-					onClick={() => setPreviewImageId(null)}
-					onKeyDown={(event) => {
-						if (event.key === 'Enter' || event.key === 'Escape') {
-							setPreviewImageId(null);
-						}
-					}}
-					aria-label="Close image preview"
-				>
-					<div
-						role="presentation"
-						className="admin-image-preview"
-						onClick={(event) => event.stopPropagation()}
-						onKeyDown={(event) => event.stopPropagation()}
-					>
-						<button type="button" className="admin-image-preview-close" onClick={() => setPreviewImageId(null)}>
-							X
-						</button>
-						<img src={`${apiBaseUrl}/images/${previewImageId}/500/350`} alt="Selected product preview" />
-					</div>
+					role="presentation"
+					className="admin-image-preview"
+					onClick={(event) => event.stopPropagation()}
+					onKeyDown={(event) => event.stopPropagation()}
+                    >
+					<button type="button" className="admin-image-preview-close" onClick={() => setPreviewImageId(null)}>
+						X
+					</button>
+					<img src={`${apiBaseUrl}/images/${previewImageId}/500/350`} alt="Selected product preview" />
 				</div>
+			</div>
 			)}
 		</>
 	);

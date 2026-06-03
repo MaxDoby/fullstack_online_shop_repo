@@ -45,6 +45,14 @@ export class StartScrapeJobDto {
   public readonly productType?: string;
 
   @ApiPropertyOptional({
+    description: 'Optional product model filter used by the scraper.',
+    example: 'iPhone 16 Pro Max',
+  })
+  @IsOptional()
+  @IsString()
+  public readonly model?: string;
+
+  @ApiPropertyOptional({
     description: 'Search text filter used by the scraper.',
     example: 'Xiaomi 15 Ultra',
   })

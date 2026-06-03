@@ -34,10 +34,13 @@ const App = () => {
 		currentPage,
 		setCurrentPage,
 		selectedImage,
+		selectedImageGallery,
 		setSelectedImage,
 		setActiveCategory,
 		totalPages,
 		reloadProducts,
+		openProductImageGallery,
+		resetProductsView,
 	} = productsState;
 
 	const {
@@ -68,6 +71,12 @@ const App = () => {
 	};
 
 	const scrollToTop = () => {
+		window.scrollTo({ top: 0, behavior: 'smooth' });
+	};
+
+	const handleOpenShop = () => {
+		resetProductsView();
+		navigate('/products');
 		window.scrollTo({ top: 0, behavior: 'smooth' });
 	};
 
@@ -106,7 +115,7 @@ const App = () => {
 	const productsPageView = {
 		products,
 		addToCart,
-		setSelectedImage,
+		openProductImageGallery,
 	};
 
 	const productsPagePagination = {
@@ -132,7 +141,7 @@ const App = () => {
 			<Header
 				cartCount={cartCount}
 				openCart={() => navigate('/cart')}
-				openShop={() => navigate('/products')}
+				openShop={handleOpenShop}
 				openAuth={() => navigate('/auth')}
 				logout={logout}
 				isAuthenticated={isAuthenticated}
@@ -140,7 +149,7 @@ const App = () => {
 				openAdmin={() => navigate('/admin')}
 				isAdmin={authUser?.role === 'ADMIN'}
 				scrollToTop={scrollToTop}
-			/>
+            />
 
 			<NewsTicker />
 
@@ -149,14 +158,8 @@ const App = () => {
 			<Routes>
 				<Route
 					path="/products"
-					element={(
-						<ProductsPage
-							filters={productsPageFilters}
-							productsView={productsPageView}
-							pagination={productsPagePagination}
-						/>
-					)}
-				/>
+					element={<ProductsPage filters={productsPageFilters} productsView={productsPageView} pagination={productsPagePagination} />}
+                />
 				<Route
 					path="/cart"
 					element={(
@@ -170,9 +173,9 @@ const App = () => {
 							orderHistory={orderHistory}
 							openShop={() => navigate('/products')}
 							checkout={handleCheckout}
-						/>
-					)}
-				/>
+                        />
+                      )}
+                />
 				<Route
 					path="/auth"
 					element={(
@@ -181,13 +184,10 @@ const App = () => {
 							registerLocal={handleRegister}
 							isAuthenticated={isAuthenticated}
 							openShop={() => navigate('/products')}
-						/>
-					)}
-				/>
-				<Route
-					path="/admin"
-					element={adminRouteElement}
-					/>
+                        />
+                      )}
+                />
+				<Route path="/admin" element={adminRouteElement} />
 
 				<Route path="*" element={<Navigate to="/products" replace />} />
 			</Routes>
@@ -195,17 +195,27 @@ const App = () => {
 			<Footer />
 
 			{selectedImage && (
-				<button
-					type="button"
-					className="modal-overlay"
-					onClick={() => setSelectedImage(null)}
-					aria-label="ГЋnchide imaginea"
-				>
-					<span className="modal-content">
-						<img src={selectedImage} alt="Preview" />
+			<button type="button" className="modal-overlay" onClick={() => setSelectedImage(null)} aria-label="ГЋnchide imaginea">
+				<span className="modal-content" role="presentation" onClick={(event) => event.stopPropagation()}>
+					<img src={selectedImage} alt="Preview" />
+
+					{selectedImageGallery.length > 1 && (
+					<span className="modal-thumbnails">
+						{selectedImageGallery.map((imageUrl) => (
+							<button
+								type="button"
+								key={imageUrl}
+								className="modal-thumbnail-button"
+								onClick={() => setSelectedImage(imageUrl)}
+                                    >
+								<img src={imageUrl} alt="Product thumbnail" />
+							</button>
+                                ))}
 					</span>
-				</button>
-			)}
+                        )}
+				</span>
+			</button>
+            )}
 		</div>
 	);
 };

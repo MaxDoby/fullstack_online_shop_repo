@@ -9,6 +9,12 @@ interface ProductPageMeta {
 	hasPreviousPage: boolean
 }
 
+interface ProductImage {
+    id: number;
+    isPrimary: boolean;
+    createdAt?: string;
+}
+
 interface ProductFromApi {
     id: number;
     title: string;
@@ -20,9 +26,7 @@ interface ProductFromApi {
         name: string;
     };
     thumbnail: string;
-    productImages: {
-        id: number;
-    }[];
+    productImages: ProductImage[];
 }
 
 export interface Product extends ProductFromApi {
@@ -42,9 +46,9 @@ const apiBaseUrl = '/api';
 const getProductImageUrl = (product: ProductFromApi) => {
 	const firstImage = product.productImages[0];
 
-	if (!firstImage) return product.thumbnail;
+	if (!firstImage) return product.thumbnail || '/placeholder-product.png';
 
-	return `${apiBaseUrl}/images/${firstImage.id}/300/200`;
+	return `${apiBaseUrl}/images/${firstImage.id}/300/300`;
 };
 
 const useProducts = () => {
@@ -54,7 +58,8 @@ const useProducts = () => {
 	const [debouncedSearchQuery, setDebouncedSearchQuery] = useState<string>('');
 	const [currentPage, setCurrentPage] = useState<number>(1);
 	const [selectedImage, setSelectedImage] = useState<string | null>(null);
-	const [activeCategory, setActiveCategory] = useState<string>('Toate');
+	const [selectedImageGallery, setSelectedImageGallery] = useState<string[]>([]);
+	const [activeCategory, setActiveCategory] = useState<string>('All products');
 	const [totalPages, setTotalPages] = useState<number>(1);
 	const [productsReloadKey, setProductsReloadKey] = useState<number>(0);
 
@@ -71,7 +76,7 @@ const useProducts = () => {
 			try {
 				const uniqueCategories = await fetch(`${apiBaseUrl}/categories`);
 				const categoriesData: string[] = await uniqueCategories.json();
-				setCategories(['Toate', ...categoriesData]);
+				setCategories(['All products', ...categoriesData]);
 			} catch (error) {
 				console.error('Fetch Error:', error);
 			}
@@ -90,7 +95,7 @@ const useProducts = () => {
 				params.set('search', debouncedSearchQuery);
 			}
 
-			if (activeCategory !== 'Toate') params.set('category', activeCategory);
+			if (activeCategory !== 'All products') params.set('category', activeCategory);
 			const response = await fetch(`${apiBaseUrl}/product?${params.toString()}`);
 			const data: ProductsResponse = await response.json();
 
@@ -109,6 +114,14 @@ const useProducts = () => {
 		setProductsReloadKey((currentKey) => currentKey + 1);
 	};
 
+	const resetProductsView = () => {
+		setSearchQuery('');
+		setDebouncedSearchQuery('');
+		setActiveCategory('All products');
+		setCurrentPage(1);
+		setProductsReloadKey((currentKey) => currentKey + 1);
+	};
+
 	const deleteProduct = async (productId: number, accessToken: string) => {
 		const response = await fetch(`${apiBaseUrl}/product/${productId}`, {
 			method: 'DELETE',
@@ -120,6 +133,22 @@ const useProducts = () => {
 		if (!response.ok) throw new Error('Product delete failed.');
 
 		setProducts((currentProducts) => currentProducts.filter((product) => product.id !== productId));
+	};
+
+	const openProductImageGallery = async (product: Product) => {
+		const response = await fetch(`${apiBaseUrl}/images/product/${product.id}`);
+		const productImages: ProductImage[] = await response.json();
+
+		const imageUrls = productImages.map((image) => `${apiBaseUrl}/images/${image.id}/900/650`);
+
+		if (imageUrls.length === 0) {
+			setSelectedImage(product.imageUrl);
+			setSelectedImageGallery([product.imageUrl]);
+			return;
+		}
+
+		setSelectedImage(imageUrls[0]);
+		setSelectedImageGallery(imageUrls);
 	};
 
 	return {
@@ -136,6 +165,10 @@ const useProducts = () => {
 		totalPages,
 		reloadProducts,
 		deleteProduct,
+		selectedImageGallery,
+		setSelectedImageGallery,
+		openProductImageGallery,
+		resetProductsView,
 	};
 };
 

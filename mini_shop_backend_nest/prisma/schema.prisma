@@ -17,6 +17,7 @@ model Product {
   thumbnail      String
   orderItems     OrderItem[]
   productImages  ProductImage[]
+  deletedAt      DateTime?
   manufacturerId Int?
   manufacturer   Manufacturer?  @relation(fields: [manufacturerId], references: [id])
 
@@ -50,6 +51,7 @@ model Order {
   user       User        @relation(fields: [userId], references: [id])
   orderItems OrderItem[]
   totalCost  Float
+  status     OrderStatus @default(COMPLETED)
   createdAt  DateTime    @default(now())
 }
 
@@ -80,6 +82,13 @@ model ProductImage {
 enum UserRole {
   USER
   ADMIN
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  CANCELED
 }
 
 /// ---SCRAPPER
@@ -123,6 +132,8 @@ model ScrapeJob {
   sourceBaseUrl  String
   manufacturer   String?
   productType    String?
+  model          String?
+  description    String?
   searchText     String?
   minPrice       Float?
   maxPrice       Float?

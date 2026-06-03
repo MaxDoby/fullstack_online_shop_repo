@@ -1,0 +1,34 @@
+export const SCRAPED_CATEGORY_MAP: Record<string, string> = {
+  telefoane: 'Phones',
+  smartphone: 'Phones',
+  phone: 'Phones',
+  phones: 'Phones',
+  telefoane_mobile: 'Phones',
+  'telefoane mobile': 'Phones',
+
+  computere: 'Laptops',
+  laptop: 'Laptops',
+  laptops: 'Laptops',
+  laptopuri: 'Laptops',
+  notebook: 'Laptops',
+  notebooks: 'Laptops',
+  'tehnica computer': 'Laptops',
+
+  audio: 'Audio',
+  casti: 'Audio',
+  căști: 'Audio',
+  boxe: 'Audio',
+  'boxe portabile': 'Audio',
+  soundbar: 'Audio',
+  soundbare: 'Audio',
+
+  accesorii: 'Accessories',
+  accessories: 'Accessories',
+  accessory: 'Accessories',
+  'accesorii telefoane mobile': 'Accessories',
+  'accesorii pentru telefoane': 'Accessories',
+
+  tablete: 'Tablets',
+  tablet: 'Tablets',
+  tablets: 'Tablets',
+};

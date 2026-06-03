@@ -127,9 +127,11 @@ export class ImagesService {
 
     const { width, height } = params;
 
-    const resizedBuffer = await sharp(imageFile.body)
-      .resize(width, height)
-      .toBuffer();
+    const resizedBuffer = await this.resizeImageBuffer(
+      imageFile.body,
+      width,
+      height,
+    );
 
     return {
       metaImage,
@@ -159,9 +161,11 @@ export class ImagesService {
       );
     }
 
-    const resizedBuffer = await sharp(imageFile.body)
-      .resize(width, height)
-      .toBuffer();
+    const resizedBuffer = await this.resizeImageBuffer(
+      imageFile.body,
+      width,
+      height,
+    );
 
     return {
       metaImage,
@@ -169,5 +173,18 @@ export class ImagesService {
         body: resizedBuffer,
       },
     };
+  }
+
+  private async resizeImageBuffer(
+    imageBuffer: Buffer,
+    width: number,
+    height: number,
+  ) {
+    return sharp(imageBuffer)
+      .resize(width, height, {
+        fit: 'contain',
+        background: { r: 255, g: 255, b: 255, alpha: 1 },
+      })
+      .toBuffer();
   }
 }

@@ -29,20 +29,27 @@ export interface AdminProductImages {
 
 interface AdminProductsResponse {
     items: AdminProduct[];
+    meta: {
+        totalPages: number;
+    };
 }
 
 const apiBaseUrl = '/api';
+const adminProductsOnPage = 20;
 
 const useAdminProducts = () => {
 	const [adminProducts, setAdminProducts] = useState<AdminProduct[]>([]);
 	const [adminProductsError, setAdminProductsError] = useState<string | null>(null);
 	const [selectedProductIdForImages, setSelectedProductIdForImages] = useState<number | null>(null);
 	const [selectedProductImages, setSelectedProductImages] = useState<AdminProductImages[]>([]);
+	const [adminProductsPage, setAdminProductsPage] = useState<number>(1);
+	const [adminProductsTotalPages, setAdminProductsTotalPages] = useState<number>(1);
+	const [adminProductsReloadKey, setAdminProductsReloadKey] = useState<number>(0);
 
 	useEffect(() => {
 		const loadAdminProducts = async () => {
 			try {
-				const response = await fetch(`${apiBaseUrl}/product?page=1&limit=100`);
+				const response = await fetch(`${apiBaseUrl}/product?page=${adminProductsPage}&limit=${adminProductsOnPage}`);
 
 				if (!response.ok) {
 					throw new Error('Unable to load admin products.');
@@ -51,13 +58,18 @@ const useAdminProducts = () => {
 				const data: AdminProductsResponse = await response.json();
 
 				setAdminProducts(data.items);
+				setAdminProductsTotalPages(data.meta.totalPages);
 			} catch (error) {
 				setAdminProductsError(error instanceof Error ? error.message : 'Unknown error.');
 			}
 		};
 
 		loadAdminProducts();
-	}, []);
+	}, [adminProductsPage, adminProductsReloadKey]);
+
+	const reloadAdminProducts = () => {
+		setAdminProductsReloadKey((currentKey) => currentKey + 1);
+	};
 
 	const createAdminProduct = async (payload: CreateAdminProductPayload, accessToken: string) => {
 		const response = await fetch(`${apiBaseUrl}/product`, {
@@ -191,6 +203,10 @@ const useAdminProducts = () => {
 		updateAdminProduct,
 		selectedProductIdForImages,
 		selectedProductImages,
+		adminProductsPage,
+		adminProductsTotalPages,
+		setAdminProductsPage,
+		reloadAdminProducts,
 		loadProductImages,
 		deleteAdminProductImage,
 		setPrimaryProductImage,

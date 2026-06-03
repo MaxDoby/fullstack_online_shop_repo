@@ -3,15 +3,15 @@ import type { Product } from '../hooks/useProducts';
 interface ProductsOnPage {
     productsToShow: Product[];
     addToCart: (product: Product) => void;
-    setSelectedImage: (img: string | null) => void;
+    openProductImageGallery: (product: Product) => void;
 }
 
-const ProductsOnPage = ({ productsToShow, addToCart, setSelectedImage }: ProductsOnPage) => (
+const ProductsOnPage = ({ productsToShow, addToCart, openProductImageGallery }: ProductsOnPage) => (
 	<main className="product-grid">
 		{productsToShow.map((product) => (
 			<article key={product.id} className="product-card">
 				<div className="card-glass" />
-				<button type="button" className="product-image-button" onClick={() => setSelectedImage(product.imageUrl)}>
+				<button type="button" className="product-image-button" onClick={() => openProductImageGallery(product)}>
 					<img src={product.imageUrl} alt={product.title} className="product-image" />
 				</button>
 				<h3>{product.title}</h3>

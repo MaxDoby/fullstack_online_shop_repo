@@ -39,6 +39,7 @@ export class OrdersService {
       data: {
         userId,
         totalCost,
+        status: 'PENDING',
         orderItems: {
           create: orderItemsData,
         },

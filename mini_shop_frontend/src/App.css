@@ -388,8 +388,8 @@ input {
 
 .modal-content img {
 	display: block;
-	max-width: 90vw;
-	max-height: 90vh;
+	width: min(900px, 88vw);
+	max-height: 70vh;
 	object-fit: contain;
 	border-radius: 16px;
 	background: white;
@@ -1087,4 +1087,222 @@ input {
 	border: 1px solid rgba(232, 232, 247, 0.22);
 	border-radius: 999px;
 	cursor: pointer;
+}
+
+.admin-scraper-panel {
+	margin-bottom: 24px;
+	padding: 16px;
+	background: rgba(10, 10, 15, 0.42);
+	border: 1px solid rgba(232, 232, 247, 0.1);
+	border-radius: 12px;
+}
+
+.admin-section-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	margin-bottom: 14px;
+}
+
+.admin-section-header h2 {
+	margin: 0;
+	color: white;
+	font-size: 20px;
+}
+
+.admin-scraper-form {
+	display: grid;
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+	gap: 12px;
+	margin-bottom: 16px;
+}
+
+.admin-scraper-form input, .admin-scraper-form select {
+	width: 100%;
+	min-height: 42px;
+	padding: 10px 12px;
+	color: white;
+	background: rgba(232, 232, 247, 0.06);
+	border: 1px solid rgba(232, 232, 247, 0.12);
+	border-radius: 10px;
+	outline: none;
+}
+
+.admin-scraper-form select {
+	color-scheme: dark;
+	cursor: pointer;
+}
+
+.admin-scraper-form select option {
+	color: white;
+	background: #181824;
+}
+
+.admin-scraper-form input:focus,
+.admin-scraper-form select:focus {
+	border-color: var(--apricot);
+	box-shadow: 0 0 0 3px rgba(236, 121, 107, 0.14);
+}
+
+.admin-scraper-table {
+	margin-top: 10px;
+}
+
+.admin-bulk-actions {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 12px;
+	margin: 14px 0;
+	color: rgba(255, 255, 255, 0.74);
+}
+
+.admin-bulk-delete-button {
+	border-color: rgba(236, 121, 107, 0.45);
+}
+
+@media (max-width: 1000px) {
+	.admin-scraper-form {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
+
+@media (max-width: 620px) {
+	.admin-section-header {
+		align-items: flex-start;
+		flex-direction: column;
+	}
+
+	.admin-scraper-form {
+		grid-template-columns: 1fr;
+	}
+}
+
+.modal-content {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 14px;
+}
+
+.modal-thumbnails {
+	display: flex;
+	max-width: min(760px, 86vw);
+	gap: 10px;
+	overflow-x: auto;
+	padding: 8px 4px 2px;
+}
+
+.modal-thumbnail-button {
+	width: 72px;
+	height: 56px;
+	padding: 0;
+	border: 1px solid rgba(255, 255, 255, 0.22);
+	border-radius: 8px;
+	background: rgba(255, 255, 255, 0.08);
+	cursor: pointer;
+	overflow: hidden;
+}
+
+.modal-thumbnail-button:hover {
+	border-color: var(--apricot);
+	transform: translateY(-1px);
+}
+
+.modal-thumbnail-button img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	display: block;
+}
+
+.admin-scraper-table-wrap {
+	height: 280px;
+	overflow-y: auto;
+	overflow-x: auto;
+	border: 1px solid rgba(232, 232, 247, 0.1);
+	border-radius: 8px;
+}
+
+.admin-scraper-table-wrap .admin-scraper-table {
+	margin: 0;
+}
+
+.admin-scraper-table th,
+.admin-scraper-table td {
+	padding: 8px 10px;
+}
+
+.admin-scraper-table th:nth-child(2),
+.admin-scraper-table td:nth-child(2) {
+	width: 90px;
+	min-width: 0;
+	max-width: 100px;
+	white-space: nowrap;
+}
+
+.admin-scraper-table th:nth-child(6),
+.admin-scraper-table td:nth-child(6),
+.admin-scraper-table th:nth-child(7),
+.admin-scraper-table td:nth-child(7),
+.admin-scraper-table th:nth-child(8),
+.admin-scraper-table td:nth-child(8) {
+	width: 70px;
+	text-align: center;
+}
+
+.admin-scraper-error-cell {
+	max-width: 180px;
+	color: #ffb3a8;
+	font-size: 0.82rem;
+	line-height: 1.25;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.admin-scraper-actions-cell {
+	display: flex;
+	flex-direction: column;
+	align-items: stretch;
+	gap: 6px;
+	min-width: 96px;
+}
+
+.admin-scraper-action-button {
+	width: 100%;
+	min-width: 0;
+	padding: 7px 10px;
+	border-radius: 9px;
+	font-size: 0.82rem;
+	font-weight: 700;
+	line-height: 1.1;
+}
+
+.admin-scraper-action-button:hover {
+	background: rgba(236, 121, 107, 0.18);
+	border-color: rgba(236, 121, 107, 0.52);
+}
+
+.admin-scraper-delete-button {
+	color: #ffd2cc;
+}
+
+.admin-scraper-delete-button:hover {
+	background: rgba(255, 90, 90, 0.14);
+	border-color: rgba(255, 120, 120, 0.44);
+}
+
+.admin-scraper-table thead th {
+	position: sticky;
+	top: 0;
+	z-index: 1;
+	background: rgba(20, 20, 32, 0.96);
+}
+
+.admin-section-actions {
+	display: flex;
+	align-items: center;
+	gap: 10px;
 }

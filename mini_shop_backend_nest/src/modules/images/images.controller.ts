@@ -76,7 +76,7 @@ export class ImagesController {
     description: 'Product not found.',
   })
   @UseGuards(JwtAuthGuard, AdminGuard)
-  @Post('/products/:productId')
+  @Post('/product/:productId')
   @UseInterceptors(FileInterceptor('file'))
   uploadProductImage(
     @Param() params: UploadProductImageParamsDto,
@@ -105,7 +105,7 @@ export class ImagesController {
     status: 404,
     description: 'Product not found.',
   })
-  @Get('/products/:productId')
+  @Get('/product/:productId')
   async getProductImages(@Param('productId') productId: string) {
     return this.imagesService.getProductImages(Number(productId));
   }

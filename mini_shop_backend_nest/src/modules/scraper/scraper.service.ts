@@ -22,6 +22,7 @@ export class ScraperService {
         sourceBaseUrl: body.sourceBaseUrl,
         manufacturer: body.manufacturer,
         productType: body.productType,
+        model: body.model,
         searchText: body.searchText,
         minPrice: body.minPrice,
         maxPrice: body.maxPrice,
@@ -29,11 +30,17 @@ export class ScraperService {
       },
     });
 
+    void this.runJob(scrapeJob.id, body);
+
+    return scrapeJob;
+  }
+
+  private async runJob(scrapeJobId: number, body: StartScrapeJobDto) {
     try {
       const adapter = this.scraperRegistry.getAdapter(body.sourceWebsite);
 
       await this.prisma.scrapeJob.update({
-        where: { id: scrapeJob.id },
+        where: { id: scrapeJobId },
         data: { status: ScrapeJobStatus.RUNNING },
       });
 
@@ -43,17 +50,44 @@ export class ScraperService {
         this.productScrapeNormalizer.normalize(rawProduct),
       );
 
+      if (normalizedProducts.length === 0) {
+        return this.prisma.scrapeJob.update({
+          where: { id: scrapeJobId },
+          data: {
+            status: ScrapeJobStatus.COMPLETED,
+            totalFound: 0,
+            totalImported: 0,
+            totalUpdated: 0,
+            totalFailed: 0,
+            errorMessage: 'No products matched the selected filters.',
+            finishedAt: new Date(),
+          },
+        });
+      }
+
       const importedProducts: Awaited<
         ReturnType<typeof this.productScrapeImporter.importProduct>
       >[] = [];
 
-      for (const normalizedProduct of normalizedProducts) {
-        const importedProduct = await this.productScrapeImporter.importProduct(
-          normalizedProduct,
-          scrapeJob.id,
-        );
+      let totalFailed: number = 0;
 
-        importedProducts.push(importedProduct);
+      for (const normalizedProduct of normalizedProducts) {
+        try {
+          const importedProduct =
+            await this.productScrapeImporter.importProduct(
+              normalizedProduct,
+              scrapeJobId,
+            );
+
+          importedProducts.push(importedProduct);
+        } catch (error) {
+          totalFailed += 1;
+
+          console.error(
+            'Product import failed:',
+            error instanceof Error ? error.message : error,
+          );
+        }
       }
 
       const totalImported = importedProducts.filter(
@@ -64,18 +98,19 @@ export class ScraperService {
       ).length;
 
       return this.prisma.scrapeJob.update({
-        where: { id: scrapeJob.id },
+        where: { id: scrapeJobId },
         data: {
           status: ScrapeJobStatus.COMPLETED,
           totalFound: normalizedProducts.length,
           totalImported,
           totalUpdated,
+          totalFailed,
           finishedAt: new Date(),
         },
       });
     } catch (error) {
       return this.prisma.scrapeJob.update({
-        where: { id: scrapeJob.id },
+        where: { id: scrapeJobId },
         data: {
           status: ScrapeJobStatus.FAILED,
           errorMessage:
@@ -99,6 +134,12 @@ export class ScraperService {
       include: {
         productSources: true,
       },
+    });
+  }
+
+  public deleteJob(id: number) {
+    return this.prisma.scrapeJob.delete({
+      where: { id },
     });
   }
 }

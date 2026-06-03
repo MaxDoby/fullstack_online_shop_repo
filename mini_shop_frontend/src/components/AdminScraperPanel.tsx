@@ -1,0 +1,156 @@
+import { useState, type SubmitEvent, type ChangeEvent } from 'react';
+import useScraperJobs, { type StartScraperJobPayload } from '../hooks/useScraperJobs';
+
+interface AdminScraperPanelProps {
+    accessToken: string | null;
+    onProductsChanged: () => void;
+}
+
+const AdminScraperPanel = ({ accessToken, onProductsChanged }: AdminScraperPanelProps) => {
+	const {
+		scraperJobs, scraperJobsError, isScraperJobLoading, loadScraperJobs, startScraperJob, deleteScraperJob,
+	} = useScraperJobs(accessToken);
+
+	const [formData, setFormData] = useState({
+		sourceWebsite: 'ultra.md',
+		sourceBaseUrl: 'https://ultra.md',
+		productType: '',
+		manufacturer: '',
+		model: '',
+		searchText: '',
+		minPrice: '',
+		maxPrice: '',
+		limit: '1',
+	});
+
+	const handleInputChange = (event: ChangeEvent<HTMLInputElement>) => {
+		const { name, value } = event.target;
+
+		setFormData((currentData) => ({
+			...currentData,
+			[name]: value,
+		}));
+	};
+
+	const handleSubmitScraperJob = async (event: SubmitEvent<HTMLFormElement>) => {
+		event.preventDefault();
+
+		const payload: StartScraperJobPayload = {
+			sourceWebsite: formData.sourceWebsite,
+			sourceBaseUrl: formData.sourceBaseUrl,
+			productType: formData.productType || undefined,
+			manufacturer: formData.manufacturer || undefined,
+			model: formData.model || undefined,
+			searchText: formData.searchText || undefined,
+			minPrice: formData.minPrice ? Number(formData.minPrice) : undefined,
+			maxPrice: formData.maxPrice ? Number(formData.maxPrice) : undefined,
+			limit: formData.limit ? Number(formData.limit) : undefined,
+		};
+
+		await startScraperJob(payload);
+	};
+
+	return (
+		<section className="admin-scraper-panel">
+			<div className="admin-section-header">
+				<h2>Scraper Jobs</h2>
+
+				<div className="admin-section-actions">
+					<button type="button" className="btn-filter" onClick={loadScraperJobs}>
+						Refresh Jobs
+					</button>
+
+					<button type="submit" form="admin-scraper-form" className="btn-filter admin-create-button" disabled={isScraperJobLoading}>
+						Start Scraper Job
+					</button>
+				</div>
+			</div>
+
+			{scraperJobsError && <p>{scraperJobsError}</p>}
+
+			<form id="admin-scraper-form" className="admin-scraper-form" onSubmit={handleSubmitScraperJob}>
+				<input name="sourceWebsite" value={formData.sourceWebsite} onChange={handleInputChange} placeholder="Sursa: ex: ultra.md" />
+
+				<input
+					name="sourceBaseUrl"
+					value={formData.sourceBaseUrl}
+					onChange={handleInputChange}
+					placeholder="URL sursa: ex: https://ultra.md"
+                />
+
+				<input name="productType" value={formData.productType} onChange={handleInputChange} placeholder="Tip produs: ex: smartphone" />
+
+				<input name="manufacturer" value={formData.manufacturer} onChange={handleInputChange} placeholder="Producator: ex: Apple" />
+
+				<input name="model" value={formData.model} onChange={handleInputChange} placeholder="Model: ex: iPhone 15" />
+
+				<input
+					name="searchText"
+					value={formData.searchText}
+					onChange={handleInputChange}
+					placeholder="Descriere: ex: smartphone iPhone 15 Pro Max"
+                />
+
+				<input name="minPrice" type="number" value={formData.minPrice} onChange={handleInputChange} placeholder="Pret minim: ex: 1" />
+
+				<input name="maxPrice" type="number" value={formData.maxPrice} onChange={handleInputChange} placeholder="Pret maxim: ex: 88888" />
+
+				<input name="limit" type="number" value={formData.limit} onChange={handleInputChange} placeholder="Limita produse: ex: 10" />
+			</form>
+
+			<div className="admin-scraper-table-wrap">
+				<table className="admin-scraper-table">
+					<thead>
+						<tr>
+							<th>ID</th>
+							<th>Source</th>
+							<th>Type</th>
+							<th>Status</th>
+							<th>Found</th>
+							<th>Imported</th>
+							<th>Updated</th>
+							<th>Failed</th>
+							<th>Created</th>
+							<th>Finished</th>
+							<th>Error</th>
+							<th>Actions</th>
+						</tr>
+					</thead>
+
+					<tbody>
+						{scraperJobs.map((job) => (
+							<tr key={job.id}>
+								<td>{job.id}</td>
+								<td>{job.sourceWebsite}</td>
+								<td>{job.productType ?? '-'}</td>
+								<td>{job.status}</td>
+								<td>{job.totalFound}</td>
+								<td>{job.totalImported}</td>
+								<td>{job.totalUpdated}</td>
+								<td>{job.totalFailed}</td>
+								<td>{new Date(job.createdAt).toLocaleString()}</td>
+								<td>{job.finishedAt ? new Date(job.finishedAt).toLocaleString() : '-'}</td>
+								<td className="admin-scraper-error-cell" title={job.errorMessage ?? undefined}>
+									{job.errorMessage ?? '-'}
+								</td>
+								<td className="admin-scraper-actions-cell">
+									{job.status === 'COMPLETED' && (
+									<button type="button" className="btn-filter admin-scraper-action-button" onClick={onProductsChanged}>
+										Reload Products
+									</button>
+                                    )}
+
+									<button type="button" className="btn-filter admin-scraper-action-button admin-scraper-delete-button" onClick={() => deleteScraperJob(job.id)}>
+										Delete
+									</button>
+								</td>
+							</tr>
+                        ))}
+					</tbody>
+				</table>
+			</div>
+		</section>
+	);
+};
+
+export default AdminScraperPanel;

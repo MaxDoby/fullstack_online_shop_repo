@@ -84,7 +84,7 @@ main()
     await prisma.$disconnect();
   });
 
-  // node -r dotenv/config - <<'NODE'
+// @'
 // const { PrismaClient } = require('@prisma/client');
 // const { PrismaPg } = require('@prisma/adapter-pg');
 
@@ -96,7 +96,7 @@ main()
 //   const result = await prisma.category.deleteMany({
 //     where: {
 //       name: {
-//         in: ['Boxe Portabile', 'Aparate încălzire aer', 'Căști'],
+//         in: ['Boxe Portabile', 'Aparate încălzire aer', 'Căști', 'smartphone'],
 //       },
 //       products: {
 //         none: {},
@@ -106,4 +106,4 @@ main()
 
 //   console.log(`Categorii goale sterse: ${result.count}`);
 // })().finally(() => prisma.$disconnect());
-// NODE
+// '@ | node -r dotenv/config -

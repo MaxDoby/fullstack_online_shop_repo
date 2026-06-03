@@ -6,7 +6,10 @@ import type { NormalizedProduct } from '../interfaces/normalized-product.interfa
 export class ProductScrapeNormalizer {
   public normalize(rawProduct: RawScrapedProduct): NormalizedProduct {
     const imageUrls = rawProduct.imageUrls ?? [];
-    const categoryName = rawProduct.categoryPath?.at(-1) ?? 'Uncategorized';
+    const categoryName =
+      rawProduct.categoryPath?.[1] ??
+      rawProduct.categoryPath?.[0] ??
+      'Uncategorized';
     const thumbnail = imageUrls[0] ?? '';
 
     return {
