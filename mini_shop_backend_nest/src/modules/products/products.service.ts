@@ -11,6 +11,7 @@ import { GetProductsQueryDto } from './dto/get-products-query.dto';
 import { PageMetaDto } from '../../common/dto/page-meta.dto';
 import { PageDto } from '../../common/dto/page.dto';
 import { StorageService } from '../../core/storage/storage.service';
+import { ProductMapper } from './mappers/product.mapper';
 
 @Injectable()
 export class ProductsService {
@@ -87,7 +88,9 @@ export class ProductsService {
     ]);
 
     const meta = new PageMetaDto(total, page, limit);
-    return new PageDto(items, meta);
+    const mappedItems = ProductMapper.toResponseList(items);
+
+    return new PageDto(mappedItems, meta);
   }
 
   async getProductById(id: number) {
@@ -117,12 +120,12 @@ export class ProductsService {
     });
     if (!product || product.deletedAt)
       throw new NotFoundException('Product not found by id.');
-    return product;
+    return ProductMapper.toDetailsResponse(product);
   }
 
-  createProduct(body: CreateProductDto) {
+  async createProduct(body: CreateProductDto) {
     const { category, ...productData } = body;
-    const product = this.prisma.product.create({
+    const product = await this.prisma.product.create({
       data: {
         ...productData,
         category: {
@@ -131,9 +134,15 @@ export class ProductsService {
       },
       include: {
         category: true,
+        productImages: {
+          select: {
+            id: true,
+          },
+        },
       },
     });
-    return product;
+
+    return ProductMapper.toResponse(product);
   }
 
   async updateProduct(id: number, body: UpdateProductDto) {
@@ -157,14 +166,19 @@ export class ProductsService {
     if (!product || product.deletedAt)
       throw new NotFoundException('Product not found by id.');
 
-    const updatedProduct = this.prisma.product.update({
+    const updatedProduct = await this.prisma.product.update({
       where: { id },
       data,
       include: {
         category: true,
+        productImages: {
+          select: {
+            id: true,
+          },
+        },
       },
     });
-    return updatedProduct;
+    return ProductMapper.toResponse(updatedProduct);
   }
 
   async deleteProduct(id: number) {

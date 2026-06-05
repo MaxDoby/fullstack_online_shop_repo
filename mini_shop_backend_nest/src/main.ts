@@ -1,4 +1,3 @@
-import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
@@ -7,9 +6,11 @@ import {
   SwaggerModule,
   type OpenAPIObject,
 } from '@nestjs/swagger';
+import { ConfigService } from '@nestjs/config';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  const configService = app.get(ConfigService);
 
   app.useGlobalPipes(new ValidationPipe({ transform: true }));
 
@@ -25,6 +26,6 @@ async function bootstrap() {
   );
   SwaggerModule.setup('api-docs', app, swaggerDocument);
 
-  await app.listen(process.env.PORT ?? 3000);
+  await app.listen(configService.getOrThrow<number>('PORT'));
 }
 void bootstrap();

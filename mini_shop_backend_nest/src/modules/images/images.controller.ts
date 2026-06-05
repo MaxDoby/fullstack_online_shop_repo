@@ -29,6 +29,7 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { Roles } from '../../common/decorators/roles.decorator';
 import { ResizeImageWithSizeParamsDto } from './dto/resize-image-with-size.dto';
 
 @ApiTags('Images')
@@ -78,6 +79,7 @@ export class ImagesController {
     status: 404,
     description: 'Product not found.',
   })
+  @Roles('ADMIN')
   @UseGuards(JwtAuthGuard, AdminGuard)
   @Post('/product/:productId')
   @UseInterceptors(FileInterceptor('file'))
@@ -143,6 +145,7 @@ export class ImagesController {
     status: 404,
     description: 'Image not found.',
   })
+  @Roles('ADMIN')
   @UseGuards(JwtAuthGuard, AdminGuard)
   @Patch(':imageId/primary')
   async setPrimaryProductImage(@Param('imageId') imageId: string) {
@@ -170,6 +173,7 @@ export class ImagesController {
     status: 404,
     description: 'Image not found.',
   })
+  @Roles('ADMIN')
   @UseGuards(JwtAuthGuard, AdminGuard)
   @Delete(':imageId')
   async deleteProductImage(@Param('imageId') imageId: string) {

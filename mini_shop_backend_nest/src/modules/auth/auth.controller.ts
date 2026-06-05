@@ -4,30 +4,20 @@ import {
   Body,
   Get,
   UseGuards,
-  Req,
   HttpCode,
 } from '@nestjs/common';
 import { JwtAuthGuard } from './guards/jwt-auth/jwt-auth.guard';
 import { AuthService } from './auth.service';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
-import { Request } from 'express';
 import {
   ApiTags,
   ApiOperation,
   ApiResponse,
   ApiBearerAuth,
 } from '@nestjs/swagger';
-
-interface JwtPayload {
-  sub: number;
-  username: string;
-  email: string;
-}
-
-type AuthenticatedRequest = Request & {
-  user?: JwtPayload;
-};
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import type { AuthenticatedUser } from '../../common/types/authenticated-user.type';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -68,7 +58,7 @@ export class AuthController {
   @ApiBearerAuth()
   @Get('/me')
   @UseGuards(JwtAuthGuard)
-  getMe(@Req() request: AuthenticatedRequest) {
-    return request.user;
+  getMe(@CurrentUser() user: AuthenticatedUser | undefined) {
+    return user;
   }
 }

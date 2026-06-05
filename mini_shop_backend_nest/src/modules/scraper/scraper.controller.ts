@@ -20,10 +20,12 @@ import { StartScrapeJobDto } from './dto/start-scrape-job.dto';
 import { ScraperService } from './scraper.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth/jwt-auth.guard';
 import { AdminGuard } from '../auth/guards/admin/admin.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
 
 @ApiBearerAuth()
 @ApiTags('Scraper')
 @Controller('scraper')
+@Roles('ADMIN')
 @UseGuards(JwtAuthGuard, AdminGuard)
 export class ScraperController {
   public constructor(private readonly scraperService: ScraperService) {}

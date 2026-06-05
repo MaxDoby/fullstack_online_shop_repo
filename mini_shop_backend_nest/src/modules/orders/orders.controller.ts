@@ -6,30 +6,20 @@ import {
   //   Patch,
   //   Param,
   //   Delete,
-  Req,
 } from '@nestjs/common';
 import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 // import { UpdateOrderDto } from './dto/update-order.dto';
 import { UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth/jwt-auth.guard';
-import { Request } from 'express';
 import {
   ApiBearerAuth,
   ApiTags,
   ApiOperation,
   ApiResponse,
 } from '@nestjs/swagger';
-
-interface JwtPayload {
-  sub: number;
-  username: string;
-  email: string;
-}
-
-type AuthenticatedRequest = Request & {
-  user: JwtPayload;
-};
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import type { AuthenticatedUser } from '../../common/types/authenticated-user.type';
 
 @ApiTags('Orders')
 @Controller('orders')
@@ -58,9 +48,9 @@ export class OrdersController {
   @Post()
   create(
     @Body() createOrderDto: CreateOrderDto,
-    @Req() request: AuthenticatedRequest,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
-    const userId = request.user.sub;
+    const userId = user.sub;
     return this.ordersService.create(userId, createOrderDto);
   }
 
@@ -81,23 +71,8 @@ export class OrdersController {
     description: 'Missing or invalid token.',
   })
   @Get('my')
-  findMyOrders(@Req() request: AuthenticatedRequest) {
-    const userId = request.user.sub;
+  findMyOrders(@CurrentUser() user: AuthenticatedUser) {
+    const userId = user.sub;
     return this.ordersService.findMyOrders(userId);
   }
-
-  //   @Get(':id')
-  //   findOne(@Param('id') id: string) {
-  //     return this.ordersService.findOne(+id);
-  //   }
-
-  //   @Patch(':id')
-  //   update(@Param('id') id: string, @Body() updateOrderDto: UpdateOrderDto) {
-  //     return this.ordersService.update(+id, updateOrderDto);
-  //   }
-
-  //   @Delete(':id')
-  //   remove(@Param('id') id: string) {
-  //     return this.ordersService.remove(+id);
-  //   }
 }

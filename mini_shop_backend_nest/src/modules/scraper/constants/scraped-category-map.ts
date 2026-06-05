@@ -21,6 +21,7 @@ export const SCRAPED_CATEGORY_MAP: Record<string, string> = {
   'boxe portabile': 'Audio',
   soundbar: 'Audio',
   soundbare: 'Audio',
+  'sistem audio': 'Audio',
 
   accesorii: 'Accessories',
   accessories: 'Accessories',

@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ProductsModule } from './modules/products/products.module';
@@ -10,9 +11,14 @@ import { OrdersModule } from './modules/orders/orders.module';
 import { ImagesModule } from './modules/images/images.module';
 import { StorageModule } from './core/storage/storage.module';
 import { ScraperModule } from './modules/scraper/scraper.module';
+import { envValidationSchema } from './config/env.validation';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      validationSchema: envValidationSchema,
+    }),
     ProductsModule,
     PrismaModule,
     CategoriesModule,

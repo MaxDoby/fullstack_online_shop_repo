@@ -4,27 +4,31 @@ import {
   ForbiddenException,
   Injectable,
 } from '@nestjs/common';
-import { Request } from 'express';
-
-interface AdminJwtPayload {
-  sub: number;
-  username: string;
-  email: string;
-  role: 'USER' | 'ADMIN';
-}
-
-type AuthenticatedRequest = Request & {
-  user?: AdminJwtPayload;
-};
+import { Reflector } from '@nestjs/core';
+import { ROLES_KEY } from '../../../../common/decorators/roles.decorator';
+import type {
+  AuthenticatedRequest,
+  UserRole,
+} from '../../../../common/types/authenticated-user.type';
 
 @Injectable()
 export class AdminGuard implements CanActivate {
+  public constructor(private readonly reflector: Reflector) {}
   canActivate(context: ExecutionContext): boolean {
+    const requiredRoles = this.reflector.getAllAndOverride<UserRole[]>(
+      ROLES_KEY,
+      [context.getHandler(), context.getClass()],
+    );
+
+    if (!requiredRoles || requiredRoles.length === 0) return true;
+
     const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
 
     const user = request.user;
 
-    if (!user || user.role !== 'ADMIN') throw new ForbiddenException();
+    if (!user || !requiredRoles.includes(user.role)) {
+      throw new ForbiddenException();
+    }
 
     return true;
   }

@@ -15,7 +15,11 @@ import { UpdateProductDto } from './dto/update-product.dto';
 import { GetProductsQueryDto } from './dto/get-products-query.dto';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { ProductsPageResponseDto } from './dto/products-page-response.dto';
+import { ProductDetailsResponseDto } from './dto/product-details-response.dto';
+import { ProductResponseDto } from './dto/product-response.dto';
+import { DeleteProductResponseDto } from './dto/delete-product-response.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth/jwt-auth.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
 import { AdminGuard } from '../auth/guards/admin/admin.guard';
 
 @ApiTags('Products')
@@ -52,6 +56,7 @@ export class ProductsController {
   @ApiResponse({
     status: 200,
     description: 'Product retrieved successfully.',
+    type: ProductDetailsResponseDto,
   })
   @ApiResponse({
     status: 404,
@@ -68,11 +73,13 @@ export class ProductsController {
   @ApiResponse({
     status: 201,
     description: 'Product created successfully.',
+    type: ProductResponseDto,
   })
   @ApiResponse({
     status: 400,
     description: 'Validation error.',
   })
+  @Roles('ADMIN')
   @UseGuards(JwtAuthGuard, AdminGuard)
   @Post()
   createProduct(@Body() body: CreateProductDto) {
@@ -91,6 +98,7 @@ export class ProductsController {
   @ApiResponse({
     status: 200,
     description: 'Product updated successfully.',
+    type: ProductResponseDto,
   })
   @ApiResponse({
     status: 400,
@@ -100,6 +108,7 @@ export class ProductsController {
     status: 404,
     description: 'Product not found.',
   })
+  @Roles('ADMIN')
   @UseGuards(JwtAuthGuard, AdminGuard)
   @Put(':id')
   updateProduct(@Param('id') id: string, @Body() body: UpdateProductDto) {
@@ -118,11 +127,13 @@ export class ProductsController {
   @ApiResponse({
     status: 200,
     description: 'Product deleted successfully.',
+    type: DeleteProductResponseDto,
   })
   @ApiResponse({
     status: 404,
     description: 'Product not found.',
   })
+  @Roles('ADMIN')
   @UseGuards(JwtAuthGuard, AdminGuard)
   @Delete(':id')
   deleteProduct(@Param('id') id: string) {

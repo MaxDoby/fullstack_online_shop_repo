@@ -8,52 +8,56 @@ export class OrdersService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(userId: number, createOrderDto: CreateOrderDto) {
-    const { items } = createOrderDto;
-    const productIds = items.map((item) => item.productId);
-    const products = await this.prisma.product.findMany({
-      where: {
-        id: { in: productIds },
-      },
-    });
-
-    if (products.length !== items.length)
-      throw new NotFoundException('One or more products were not found.');
-
-    const orderItemsData = items.map((item) => {
-      const product = products.find((product) => product.id === item.productId);
-
-      if (!product) throw new NotFoundException('Product not found.');
-
-      return {
-        productId: item.productId,
-        quantity: item.quantity,
-        priceAtPurchase: product.price,
-      };
-    });
-
-    const totalCost = orderItemsData.reduce((suma, item) => {
-      return suma + item.priceAtPurchase * item.quantity;
-    }, 0);
-
-    const order = await this.prisma.order.create({
-      data: {
-        userId,
-        totalCost,
-        status: 'PENDING',
-        orderItems: {
-          create: orderItemsData,
+    return this.prisma.$transaction(async (tx) => {
+      const { items } = createOrderDto;
+      const productIds = items.map((item) => item.productId);
+      const products = await tx.product.findMany({
+        where: {
+          id: { in: productIds },
         },
-      },
-      include: {
-        orderItems: {
-          include: {
-            product: true,
+      });
+
+      if (products.length !== items.length)
+        throw new NotFoundException('One or more products were not found.');
+
+      const orderItemsData = items.map((item) => {
+        const product = products.find(
+          (product) => product.id === item.productId,
+        );
+
+        if (!product) throw new NotFoundException('Product not found.');
+
+        return {
+          productId: item.productId,
+          quantity: item.quantity,
+          priceAtPurchase: product.price,
+        };
+      });
+
+      const totalCost = orderItemsData.reduce((sum, item) => {
+        return sum + item.priceAtPurchase * item.quantity;
+      }, 0);
+
+      const order = await tx.order.create({
+        data: {
+          userId,
+          totalCost,
+          status: 'PENDING',
+          orderItems: {
+            create: orderItemsData,
           },
         },
-      },
-    });
+        include: {
+          orderItems: {
+            include: {
+              product: true,
+            },
+          },
+        },
+      });
 
-    return order;
+      return order;
+    });
   }
 
   findMyOrders(userId: number) {
