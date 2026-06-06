@@ -21,6 +21,7 @@ import { ScraperService } from './scraper.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth/jwt-auth.guard';
 import { AdminGuard } from '../auth/guards/admin/admin.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
+import { ScrapeJobResponseDto } from './dto/scrape-job-response.dto';
 
 @ApiBearerAuth()
 @ApiTags('Scraper')
@@ -36,7 +37,11 @@ export class ScraperController {
       'Creates a scraper job and starts the scraping process asynchronously. The request defines the source website and optional filters such as product type, manufacturer, model, text search and price range.',
   })
   @ApiBody({ type: StartScrapeJobDto })
-  @ApiResponse({ status: 201, description: 'Scraper job created and started.' })
+  @ApiResponse({
+    status: 201,
+    description: 'Scraper job created and started.',
+    type: ScrapeJobResponseDto,
+  })
   @ApiResponse({ status: 400, description: 'Invalid scraper job payload.' })
   @ApiResponse({ status: 401, description: 'Missing or invalid JWT token.' })
   @ApiResponse({ status: 403, description: 'Admin role is required.' })
@@ -53,6 +58,7 @@ export class ScraperController {
   @ApiResponse({
     status: 200,
     description: 'Scraper jobs retrieved successfully.',
+    type: [ScrapeJobResponseDto],
   })
   @ApiResponse({ status: 401, description: 'Missing or invalid JWT token.' })
   @ApiResponse({ status: 403, description: 'Admin role is required.' })
@@ -75,6 +81,7 @@ export class ScraperController {
   @ApiResponse({
     status: 200,
     description: 'Scraper job retrieved successfully.',
+    type: ScrapeJobResponseDto,
   })
   @ApiResponse({ status: 401, description: 'Missing or invalid JWT token.' })
   @ApiResponse({ status: 403, description: 'Admin role is required.' })
@@ -98,6 +105,7 @@ export class ScraperController {
   @ApiResponse({
     status: 200,
     description: 'Scraper job deleted successfully.',
+    type: ScrapeJobResponseDto,
   })
   @ApiResponse({ status: 401, description: 'Missing or invalid JWT token.' })
   @ApiResponse({ status: 403, description: 'Admin role is required.' })

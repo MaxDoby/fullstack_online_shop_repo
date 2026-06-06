@@ -1,7 +1,12 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { CreateOrderDto } from './dto/create-order.dto';
 // import { UpdateOrderDto } from './dto/update-order.dto';
 import { PrismaService } from '../../core/prisma/prisma.service';
+import { OrderMapper } from './mappers/order.mapper';
 
 @Injectable()
 export class OrdersService {
@@ -27,6 +32,9 @@ export class OrdersService {
 
         if (!product) throw new NotFoundException('Product not found.');
 
+        if (product.stock < item.quantity)
+          throw new BadRequestException('Not enough stock for product.');
+
         return {
           productId: item.productId,
           quantity: item.quantity,
@@ -37,6 +45,17 @@ export class OrdersService {
       const totalCost = orderItemsData.reduce((sum, item) => {
         return sum + item.priceAtPurchase * item.quantity;
       }, 0);
+
+      for (const item of items) {
+        await tx.product.update({
+          where: { id: item.productId },
+          data: {
+            stock: {
+              decrement: item.quantity,
+            },
+          },
+        });
+      }
 
       const order = await tx.order.create({
         data: {
@@ -56,12 +75,12 @@ export class OrdersService {
         },
       });
 
-      return order;
+      return OrderMapper.toResponse(order);
     });
   }
 
-  findMyOrders(userId: number) {
-    return this.prisma.order.findMany({
+  async findMyOrders(userId: number) {
+    const orders = await this.prisma.order.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' },
       include: {
@@ -72,6 +91,7 @@ export class OrdersService {
         },
       },
     });
+    return OrderMapper.toResponseList(orders);
   }
 
   //   findAll() {

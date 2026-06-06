@@ -18,6 +18,8 @@ import {
 } from '@nestjs/swagger';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../../common/types/authenticated-user.type';
+import { AuthResponseDto } from './dto/auth-response.dto';
+import { CurrentUserResponseDto } from './dto/current-user-response.dto';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -27,7 +29,11 @@ export class AuthController {
   /// ---registerUser---
 
   @ApiOperation({ summary: 'Register a new user.' })
-  @ApiResponse({ status: 201, description: 'User registration successful.' })
+  @ApiResponse({
+    status: 201,
+    description: 'User registration successful.',
+    type: AuthResponseDto,
+  })
   @ApiResponse({ status: 409, description: 'Email/Username already used.' })
   @ApiResponse({ status: 400, description: 'Validation error.' })
   @Post('/register')
@@ -38,7 +44,11 @@ export class AuthController {
   /// ---loginUser---
 
   @ApiOperation({ summary: 'Login user.' })
-  @ApiResponse({ status: 200, description: 'User logged in successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'User logged in successfully.',
+    type: AuthResponseDto,
+  })
   @ApiResponse({ status: 400, description: 'Validation error.' })
   @ApiResponse({
     status: 401,
@@ -53,7 +63,11 @@ export class AuthController {
   /// ---getMe---
 
   @ApiOperation({ summary: 'Get user data.' })
-  @ApiResponse({ status: 200, description: 'Authenticated user data.' })
+  @ApiResponse({
+    status: 200,
+    description: 'Authenticated user data.',
+    type: CurrentUserResponseDto,
+  })
   @ApiResponse({ status: 401, description: 'Missing or invalid access token.' })
   @ApiBearerAuth()
   @Get('/me')

@@ -1,16 +1,7 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  //   Patch,
-  //   Param,
-  //   Delete,
-} from '@nestjs/common';
+import { Controller, Get, Post, Body, UseGuards } from '@nestjs/common';
 import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './dto/create-order.dto';
-// import { UpdateOrderDto } from './dto/update-order.dto';
-import { UseGuards } from '@nestjs/common';
+import { OrderResponseDto } from './dto/order-response.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth/jwt-auth.guard';
 import {
   ApiBearerAuth,
@@ -31,6 +22,7 @@ export class OrdersController {
   @ApiResponse({
     status: 201,
     description: 'Order created successfully.',
+    type: OrderResponseDto,
   })
   @ApiResponse({
     status: 400,
@@ -54,17 +46,13 @@ export class OrdersController {
     return this.ordersService.create(userId, createOrderDto);
   }
 
-  //   @Get()
-  //   findAll() {
-  //     return this.ordersService.findAll();
-  //   }
-
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Get authenticated user orders.' })
   @ApiResponse({
     status: 200,
     description: 'Get authenticated user orders.',
+    type: [OrderResponseDto],
   })
   @ApiResponse({
     status: 401,

@@ -31,6 +31,8 @@ import {
 } from '@nestjs/swagger';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { ResizeImageWithSizeParamsDto } from './dto/resize-image-with-size.dto';
+import { DeleteProductImageResponseDto } from './dto/delete-product-image-response.dto';
+import { ProductImageResponseDto } from './dto/product-image-response.dto';
 
 @ApiTags('Images')
 @Controller('images')
@@ -69,6 +71,7 @@ export class ImagesController {
   @ApiResponse({
     status: 201,
     description: 'Product image uploaded successfully.',
+    type: ProductImageResponseDto,
   })
   @ApiResponse({
     status: 400,
@@ -114,6 +117,7 @@ export class ImagesController {
   @ApiResponse({
     status: 200,
     description: 'Product images retrieved successfully.',
+    type: [ProductImageResponseDto],
   })
   @ApiResponse({
     status: 404,
@@ -140,6 +144,7 @@ export class ImagesController {
   @ApiResponse({
     status: 200,
     description: 'Product primary image updated successfully.',
+    type: ProductImageResponseDto,
   })
   @ApiResponse({
     status: 404,
@@ -168,6 +173,7 @@ export class ImagesController {
   @ApiResponse({
     status: 200,
     description: 'Product image deleted successfully.',
+    type: DeleteProductImageResponseDto,
   })
   @ApiResponse({
     status: 404,

@@ -8,6 +8,7 @@ import { StorageService } from '../../core/storage/storage.service';
 import sharp from 'sharp';
 import 'multer';
 import { ResizeImageParamsDto } from './dto/resize-image.dto';
+import { ProductImageMapper } from './mappers/product-image.mapper';
 
 @Injectable()
 export class ImagesService {
@@ -48,7 +49,7 @@ export class ImagesService {
       },
     });
 
-    return saveImageData;
+    return ProductImageMapper.toResponse(saveImageData);
   }
 
   async getProductImages(productId: number) {
@@ -62,7 +63,7 @@ export class ImagesService {
       orderBy: { createdAt: 'asc' },
     });
 
-    return productImages;
+    return ProductImageMapper.toResponseList(productImages);
   }
 
   async getOne(id: number) {
@@ -95,7 +96,7 @@ export class ImagesService {
       }),
     ]);
 
-    return updatedImage;
+    return ProductImageMapper.toResponse(updatedImage);
   }
 
   async deleteProductImage(imageId: number) {

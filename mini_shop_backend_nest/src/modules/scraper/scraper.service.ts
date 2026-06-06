@@ -5,6 +5,7 @@ import { ScraperRegistryService } from './scraper-registry.service';
 import type { StartScrapeJobDto } from './dto/start-scrape-job.dto';
 import { ProductScrapeNormalizer } from './normalizers/product-scrape.normalizer';
 import { ProductScrapeImporter } from './importers/product-scrape.importer';
+import { ScrapeJobMapper } from './mappers/scrape-job.mapper';
 
 @Injectable()
 export class ScraperService {
@@ -32,7 +33,7 @@ export class ScraperService {
 
     void this.runJob(scrapeJob.id, body);
 
-    return scrapeJob;
+    return ScrapeJobMapper.toResponse(scrapeJob);
   }
 
   private async runJob(scrapeJobId: number, body: StartScrapeJobDto) {
@@ -121,25 +122,30 @@ export class ScraperService {
     }
   }
 
-  public findAllJobs() {
-    return this.prisma.scrapeJob.findMany({
+  public async findAllJobs() {
+    const jobs = await this.prisma.scrapeJob.findMany({
       orderBy: { createdAt: 'desc' },
       take: 50,
     });
+
+    return ScrapeJobMapper.toResponseList(jobs);
   }
 
-  public findJobById(id: number) {
-    return this.prisma.scrapeJob.findUnique({
+  public async findJobById(id: number) {
+    const job = await this.prisma.scrapeJob.findUnique({
       where: { id },
-      include: {
-        productSources: true,
-      },
     });
+
+    if (!job) return null;
+
+    return ScrapeJobMapper.toResponse(job);
   }
 
-  public deleteJob(id: number) {
-    return this.prisma.scrapeJob.delete({
+  public async deleteJob(id: number) {
+    const job = await this.prisma.scrapeJob.delete({
       where: { id },
     });
+
+    return ScrapeJobMapper.toResponse(job);
   }
 }
