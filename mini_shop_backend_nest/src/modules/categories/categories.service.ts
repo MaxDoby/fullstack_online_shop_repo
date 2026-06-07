@@ -1,15 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../../core/prisma/prisma.service';
+import { CategoriesRepository } from './categories.repository';
 import { CategoryMapper } from './mappers/category.mapper';
 
 @Injectable()
 export class CategoriesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly categoriesRepository: CategoriesRepository) {}
 
   async getCategories() {
-    const categories = await this.prisma.category.findMany({
-      orderBy: { name: 'asc' },
-    });
+    const categories = await this.categoriesRepository.findAllCategories();
     return CategoryMapper.toResponseList(categories);
   }
 }

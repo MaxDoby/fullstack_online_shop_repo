@@ -3,24 +3,22 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
-import { PrismaService } from '../../core/prisma/prisma.service';
 import { StorageService } from '../../core/storage/storage.service';
 import sharp from 'sharp';
 import 'multer';
 import { ResizeImageParamsDto } from './dto/resize-image.dto';
 import { ProductImageMapper } from './mappers/product-image.mapper';
+import { ImagesRepository } from './images.repository';
 
 @Injectable()
 export class ImagesService {
   constructor(
-    private readonly prisma: PrismaService,
     private readonly storageService: StorageService,
+    private readonly imagesRepository: ImagesRepository,
   ) {}
 
   async uploadProductImage(productId: number, file: Express.Multer.File) {
-    const product = await this.prisma.product.findUnique({
-      where: { id: productId },
-    });
+    const product = await this.imagesRepository.findProductById(productId);
 
     if (!product) throw new NotFoundException('Product not found.');
 
@@ -37,39 +35,34 @@ export class ImagesService {
       file.mimetype,
     );
 
-    const saveImageData = await this.prisma.productImage.create({
-      data: {
-        productId,
-        storageKey,
-        originalName: file.originalname,
-        mimeType: file.mimetype,
-        size: file.size,
-        width: metadata.width,
-        height: metadata.height,
+    const saveImageData = await this.imagesRepository.createProductImage({
+      product: {
+        connect: { id: productId },
       },
+      storageKey,
+      originalName: file.originalname,
+      mimeType: file.mimetype,
+      size: file.size,
+      width: metadata.width,
+      height: metadata.height,
     });
 
     return ProductImageMapper.toResponse(saveImageData);
   }
 
   async getProductImages(productId: number) {
-    const product = await this.prisma.product.findUnique({
-      where: { id: productId },
-    });
+    const product = await this.imagesRepository.findProductById(productId);
 
     if (!product) throw new NotFoundException('Product not found.');
-    const productImages = await this.prisma.productImage.findMany({
-      where: { productId },
-      orderBy: { createdAt: 'asc' },
-    });
+
+    const productImages =
+      await this.imagesRepository.findProductImages(productId);
 
     return ProductImageMapper.toResponseList(productImages);
   }
 
   async getOne(id: number) {
-    const metaImage = await this.prisma.productImage.findUnique({
-      where: { id },
-    });
+    const metaImage = await this.imagesRepository.findImageById(id);
 
     if (!metaImage) throw new NotFoundException('Image not found by ID.');
 
@@ -79,38 +72,26 @@ export class ImagesService {
   }
 
   async setPrimaryProductImage(imageId: number) {
-    const productImage = await this.prisma.productImage.findUnique({
-      where: { id: imageId },
-    });
+    const productImage = await this.imagesRepository.findImageById(imageId);
 
     if (!productImage) throw new NotFoundException('Image not found.');
 
-    const [, updatedImage] = await this.prisma.$transaction([
-      this.prisma.productImage.updateMany({
-        where: { productId: productImage.productId },
-        data: { isPrimary: false },
-      }),
-      this.prisma.productImage.update({
-        where: { id: imageId },
-        data: { isPrimary: true },
-      }),
-    ]);
+    const updatedImage = await this.imagesRepository.setPrimaryImage({
+      imageId,
+      productId: productImage.productId,
+    });
 
     return ProductImageMapper.toResponse(updatedImage);
   }
 
   async deleteProductImage(imageId: number) {
-    const productImage = await this.prisma.productImage.findUnique({
-      where: { id: imageId },
-    });
+    const productImage = await this.imagesRepository.findImageById(imageId);
 
     if (!productImage) throw new NotFoundException('Image not found.');
 
     await this.storageService.deleteFile(productImage.storageKey);
 
-    await this.prisma.productImage.delete({
-      where: { id: imageId },
-    });
+    await this.imagesRepository.deleteImage(imageId);
 
     return {
       message: `This image was successfully deleted.`,

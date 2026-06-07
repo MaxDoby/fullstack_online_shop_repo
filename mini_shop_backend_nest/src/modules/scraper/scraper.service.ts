@@ -1,35 +1,22 @@
 import { Injectable } from '@nestjs/common';
-import { ScrapeJobStatus } from '@prisma/client';
-import { PrismaService } from '../../core/prisma/prisma.service';
 import { ScraperRegistryService } from './scraper-registry.service';
 import type { StartScrapeJobDto } from './dto/start-scrape-job.dto';
 import { ProductScrapeNormalizer } from './normalizers/product-scrape.normalizer';
 import { ProductScrapeImporter } from './importers/product-scrape.importer';
 import { ScrapeJobMapper } from './mappers/scrape-job.mapper';
+import { ScraperRepository } from './scraper.repository';
 
 @Injectable()
 export class ScraperService {
   public constructor(
-    private readonly prisma: PrismaService,
+    private readonly scraperRepository: ScraperRepository,
     private readonly scraperRegistry: ScraperRegistryService,
     private readonly productScrapeNormalizer: ProductScrapeNormalizer,
     private readonly productScrapeImporter: ProductScrapeImporter,
   ) {}
 
   public async startJob(body: StartScrapeJobDto) {
-    const scrapeJob = await this.prisma.scrapeJob.create({
-      data: {
-        sourceWebsite: body.sourceWebsite,
-        sourceBaseUrl: body.sourceBaseUrl,
-        manufacturer: body.manufacturer,
-        productType: body.productType,
-        model: body.model,
-        searchText: body.searchText,
-        minPrice: body.minPrice,
-        maxPrice: body.maxPrice,
-        status: ScrapeJobStatus.PENDING,
-      },
-    });
+    const scrapeJob = await this.scraperRepository.createJob(body);
 
     void this.runJob(scrapeJob.id, body);
 
@@ -40,10 +27,7 @@ export class ScraperService {
     try {
       const adapter = this.scraperRegistry.getAdapter(body.sourceWebsite);
 
-      await this.prisma.scrapeJob.update({
-        where: { id: scrapeJobId },
-        data: { status: ScrapeJobStatus.RUNNING },
-      });
+      await this.scraperRepository.markRunning(scrapeJobId);
 
       const rawProducts = await adapter.scrapeProducts(body);
 
@@ -52,18 +36,7 @@ export class ScraperService {
       );
 
       if (normalizedProducts.length === 0) {
-        return this.prisma.scrapeJob.update({
-          where: { id: scrapeJobId },
-          data: {
-            status: ScrapeJobStatus.COMPLETED,
-            totalFound: 0,
-            totalImported: 0,
-            totalUpdated: 0,
-            totalFailed: 0,
-            errorMessage: 'No products matched the selected filters.',
-            finishedAt: new Date(),
-          },
-        });
+        return this.scraperRepository.markCompletedWithNoProducts(scrapeJobId);
       }
 
       const importedProducts: Awaited<
@@ -98,43 +71,30 @@ export class ScraperService {
         (importedProduct) => importedProduct.action === 'updated',
       ).length;
 
-      return this.prisma.scrapeJob.update({
-        where: { id: scrapeJobId },
-        data: {
-          status: ScrapeJobStatus.COMPLETED,
-          totalFound: normalizedProducts.length,
-          totalImported,
-          totalUpdated,
-          totalFailed,
-          finishedAt: new Date(),
-        },
+      return this.scraperRepository.markCompleted({
+        id: scrapeJobId,
+        totalFound: normalizedProducts.length,
+        totalImported,
+        totalUpdated,
+        totalFailed,
       });
     } catch (error) {
-      return this.prisma.scrapeJob.update({
-        where: { id: scrapeJobId },
-        data: {
-          status: ScrapeJobStatus.FAILED,
-          errorMessage:
-            error instanceof Error ? error.message : 'Unknown scraper error.',
-          finishedAt: new Date(),
-        },
+      return this.scraperRepository.markFailed({
+        id: scrapeJobId,
+        errorMessage:
+          error instanceof Error ? error.message : 'Unknown scraper error.',
       });
     }
   }
 
   public async findAllJobs() {
-    const jobs = await this.prisma.scrapeJob.findMany({
-      orderBy: { createdAt: 'desc' },
-      take: 50,
-    });
+    const jobs = await this.scraperRepository.findAllJobs();
 
     return ScrapeJobMapper.toResponseList(jobs);
   }
 
   public async findJobById(id: number) {
-    const job = await this.prisma.scrapeJob.findUnique({
-      where: { id },
-    });
+    const job = await this.scraperRepository.findJobById(id);
 
     if (!job) return null;
 
@@ -142,9 +102,7 @@ export class ScraperService {
   }
 
   public async deleteJob(id: number) {
-    const job = await this.prisma.scrapeJob.delete({
-      where: { id },
-    });
+    const job = await this.scraperRepository.deleteJob(id);
 
     return ScrapeJobMapper.toResponse(job);
   }

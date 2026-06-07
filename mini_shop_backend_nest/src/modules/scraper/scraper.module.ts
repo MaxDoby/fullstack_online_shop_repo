@@ -12,6 +12,7 @@ import { ProductImageScrapeImporter } from './importers/product-image-scrape.imp
 import { StorageService } from '../../core/storage/storage.service';
 import { UltraSearchAdapter } from './adapters/ultra/ultra-search.adapter';
 import { UltraProductParser } from './adapters/ultra/ultra-product.parser';
+import { ScraperRepository } from './scraper.repository';
 
 @Module({
   imports: [AuthModule],
@@ -27,6 +28,7 @@ import { UltraProductParser } from './adapters/ultra/ultra-product.parser';
     ProductImageScrapeImporter,
     UltraSearchAdapter,
     UltraProductParser,
+    ScraperRepository,
     {
       provide: SCRAPER_ADAPTERS,
       useFactory: (ultraAdapter: UltraSearchAdapter) => [ultraAdapter],

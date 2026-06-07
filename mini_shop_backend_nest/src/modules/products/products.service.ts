@@ -5,19 +5,19 @@ import {
 } from '@nestjs/common';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
-import { PrismaService } from '../../core/prisma/prisma.service';
 import { Prisma } from '@prisma/client';
 import { GetProductsQueryDto } from './dto/get-products-query.dto';
 import { PageMetaDto } from '../../common/dto/page-meta.dto';
 import { PageDto } from '../../common/dto/page.dto';
 import { StorageService } from '../../core/storage/storage.service';
 import { ProductMapper } from './mappers/product.mapper';
+import { ProductsRepository } from './products.repository';
 
 @Injectable()
 export class ProductsService {
   constructor(
-    private readonly prisma: PrismaService,
     private readonly storageService: StorageService,
+    private readonly productsRepository: ProductsRepository,
   ) {}
 
   async getAllProducts(query: GetProductsQueryDto) {
@@ -50,42 +50,13 @@ export class ProductsService {
       ];
     }
 
-    // const items = await this.prisma.product.findMany({
-    //   where,
-    //   skip,
-    //   take: limit,
-    //   orderBy: { [sortBy]: sortOrder },
-    // });
-
-    // const total = await this.prisma.product.count({
-    //   where,
-    // });
-
-    // const totalPages = Math.ceil(total / limit);
-
-    // return { items, total, page, limit, totalPages };
-
-    const [items, total] = await this.prisma.$transaction([
-      this.prisma.product.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy: [{ stock: 'desc' }, { [sortBy]: sortOrder }],
-        include: {
-          category: true,
-          manufacturer: true,
-          productImages: {
-            select: {
-              id: true,
-              isPrimary: true,
-            },
-            orderBy: [{ isPrimary: 'desc' }, { createdAt: 'asc' }],
-            take: 1,
-          },
-        },
-      }),
-      this.prisma.product.count({ where }),
-    ]);
+    const [items, total] = await this.productsRepository.findPaginatedProducts({
+      where,
+      skip,
+      limit,
+      sortBy,
+      sortOrder,
+    });
 
     const meta = new PageMetaDto(total, page, limit);
     const mappedItems = ProductMapper.toResponseList(items);
@@ -94,53 +65,24 @@ export class ProductsService {
   }
 
   async getProductById(id: number) {
-    const product = await this.prisma.product.findUnique({
-      where: { id },
-      include: {
-        category: true,
-        manufacturer: true,
-        productImages: {
-          orderBy: [{ isPrimary: 'desc' }, { createdAt: 'asc' }],
-        },
-        specificationGroups: {
-          orderBy: [{ order: 'asc' }, { id: 'asc' }],
-          include: {
-            specifications: {
-              orderBy: { id: 'asc' },
-            },
-          },
-        },
-        variants: {
-          orderBy: { id: 'asc' },
-        },
-        sources: {
-          orderBy: { lastScrapedAt: 'desc' },
-        },
-      },
-    });
+    const product = await this.productsRepository.findDetailsById(id);
+
     if (!product || product.deletedAt)
       throw new NotFoundException('Product not found by id.');
+
     return ProductMapper.toDetailsResponse(product);
   }
 
   async createProduct(body: CreateProductDto) {
     const { category, ...productData } = body;
-    const product = await this.prisma.product.create({
-      data: {
-        ...productData,
-        category: {
-          connect: { name: category },
-        },
+    const data: Prisma.ProductCreateInput = {
+      ...productData,
+      category: {
+        connect: { name: category },
       },
-      include: {
-        category: true,
-        productImages: {
-          select: {
-            id: true,
-          },
-        },
-      },
-    });
+    };
+
+    const product = await this.productsRepository.createProduct(data);
 
     return ProductMapper.toResponse(product);
   }
@@ -160,44 +102,27 @@ export class ProductsService {
       };
     }
 
-    const product = await this.prisma.product.findUnique({
-      where: { id },
-    });
+    const product = await this.productsRepository.findById(id);
+
     if (!product || product.deletedAt)
       throw new NotFoundException('Product not found by id.');
 
-    const updatedProduct = await this.prisma.product.update({
-      where: { id },
+    const updatedProduct = await this.productsRepository.updateProduct(
+      id,
       data,
-      include: {
-        category: true,
-        productImages: {
-          select: {
-            id: true,
-          },
-        },
-      },
-    });
+    );
+
     return ProductMapper.toResponse(updatedProduct);
   }
 
   async deleteProduct(id: number) {
-    const product = await this.prisma.product.findUnique({
-      where: { id },
-    });
+    const product = await this.productsRepository.findById(id);
+
     if (!product || product.deletedAt)
       throw new NotFoundException('Product not found by id.');
 
-    const activeOrderItem = await this.prisma.orderItem.findFirst({
-      where: {
-        productId: id,
-        order: {
-          status: {
-            in: ['PENDING', 'PROCESSING'],
-          },
-        },
-      },
-    });
+    const activeOrderItem =
+      await this.productsRepository.findActiveOrderItemByProductId(id);
 
     if (activeOrderItem) {
       throw new BadRequestException(
@@ -205,17 +130,12 @@ export class ProductsService {
       );
     }
 
-    const orderItem = await this.prisma.orderItem.findFirst({
-      where: { productId: id },
-    });
+    const orderItem =
+      await this.productsRepository.findOrderItemByProductId(id);
 
     if (orderItem) {
-      const deletedProduct = await this.prisma.product.update({
-        where: { id },
-        data: {
-          deletedAt: new Date(),
-        },
-      });
+      const deletedProduct =
+        await this.productsRepository.softDeleteProduct(id);
 
       return {
         message: 'Product removed from catalog successfully.',
@@ -223,52 +143,20 @@ export class ProductsService {
       };
     }
 
-    const productImages = await this.prisma.productImage.findMany({
-      where: { productId: id },
-    });
+    const productImages = await this.productsRepository.findProductImages(id);
 
     for (const image of productImages) {
       await this.storageService.deleteFile(image.storageKey);
     }
 
     const specificationGroups =
-      await this.prisma.productSpecificationGroup.findMany({
-        where: { productId: id },
-        select: { id: true },
-      });
+      await this.productsRepository.findSpecificationGroupIds(id);
 
     const specificationGroupIds = specificationGroups.map((group) => group.id);
 
-    const deletedProduct = await this.prisma.$transaction(async (tx) => {
-      if (specificationGroupIds.length > 0) {
-        await tx.productSpecification.deleteMany({
-          where: {
-            groupId: {
-              in: specificationGroupIds,
-            },
-          },
-        });
-      }
-
-      await tx.productSpecificationGroup.deleteMany({
-        where: { productId: id },
-      });
-
-      await tx.productVariant.deleteMany({
-        where: { productId: id },
-      });
-
-      await tx.productSource.deleteMany({
-        where: { productId: id },
-      });
-
-      await tx.productImage.deleteMany({
-        where: { productId: id },
-      });
-
-      return tx.product.delete({
-        where: { id },
-      });
+    const deletedProduct = await this.productsRepository.hardDeleteProduct({
+      productId: id,
+      specificationGroupIds,
     });
 
     return {
