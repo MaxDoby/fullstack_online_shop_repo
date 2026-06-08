@@ -1,10 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../core/prisma/prisma.service';
 import { Prisma } from '@prisma/client';
+import { BaseRepository } from '../../core/database/repositories/base.repository';
 
 @Injectable()
-export class ProductsRepository {
-  public constructor(private readonly prisma: PrismaService) {}
+export class ProductsRepository extends BaseRepository<
+  PrismaService['product']
+> {
+  public constructor(private readonly prisma: PrismaService) {
+    super(prisma.product);
+  }
 
   public findPaginatedProducts(params: {
     where: Prisma.ProductWhereInput;
@@ -76,12 +81,6 @@ export class ProductsRepository {
           },
         },
       },
-    });
-  }
-
-  public findById(id: number) {
-    return this.prisma.product.findUnique({
-      where: { id },
     });
   }
 

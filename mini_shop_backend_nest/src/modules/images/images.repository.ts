@@ -1,35 +1,18 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../core/prisma/prisma.service';
+import { BaseRepository } from '../../core/database/repositories/base.repository';
 
 @Injectable()
-export class ImagesRepository {
-  public constructor(private readonly prisma: PrismaService) {}
+export class ImagesRepository extends BaseRepository<
+  PrismaService['productImage']
+> {
+  public constructor(private readonly prisma: PrismaService) {
+    super(prisma.productImage);
+  }
 
   public findProductById(productId: number) {
     return this.prisma.product.findUnique({
-      where: {
-        id: productId,
-      },
-    });
-  }
-
-  public createProductImage(data: Prisma.ProductImageCreateInput) {
-    return this.prisma.productImage.create({
-      data,
-    });
-  }
-
-  public findProductImages(productId: number) {
-    return this.prisma.productImage.findMany({
-      where: { productId },
-      orderBy: { createdAt: 'asc' },
-    });
-  }
-
-  public findImageById(imageId: number) {
-    return this.prisma.productImage.findUnique({
-      where: { id: imageId },
+      where: { id: productId },
     });
   }
 
@@ -46,12 +29,6 @@ export class ImagesRepository {
         where: { id: imageId },
         data: { isPrimary: true },
       });
-    });
-  }
-
-  public deleteImage(imageId: number) {
-    return this.prisma.productImage.delete({
-      where: { id: imageId },
     });
   }
 }

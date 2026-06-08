@@ -7,7 +7,9 @@ export class CategoriesService {
   constructor(private readonly categoriesRepository: CategoriesRepository) {}
 
   async getCategories() {
-    const categories = await this.categoriesRepository.findAllCategories();
+    const categories = await this.categoriesRepository.findMany({
+      orderBy: { name: 'asc' },
+    });
     return CategoryMapper.toResponseList(categories);
   }
 }

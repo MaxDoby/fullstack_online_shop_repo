@@ -35,16 +35,18 @@ export class ImagesService {
       file.mimetype,
     );
 
-    const saveImageData = await this.imagesRepository.createProductImage({
-      product: {
-        connect: { id: productId },
+    const saveImageData = await this.imagesRepository.create({
+      data: {
+        product: {
+          connect: { id: productId },
+        },
+        storageKey,
+        originalName: file.originalname,
+        mimeType: file.mimetype,
+        size: file.size,
+        width: metadata.width,
+        height: metadata.height,
       },
-      storageKey,
-      originalName: file.originalname,
-      mimeType: file.mimetype,
-      size: file.size,
-      width: metadata.width,
-      height: metadata.height,
     });
 
     return ProductImageMapper.toResponse(saveImageData);
@@ -55,14 +57,20 @@ export class ImagesService {
 
     if (!product) throw new NotFoundException('Product not found.');
 
-    const productImages =
-      await this.imagesRepository.findProductImages(productId);
+    const productImages = await this.imagesRepository.findMany({
+      where: { productId },
+      orderBy: { createdAt: 'asc' },
+    });
 
     return ProductImageMapper.toResponseList(productImages);
   }
 
-  async getOne(id: number) {
-    const metaImage = await this.imagesRepository.findImageById(id);
+  async getOne(imageId: number) {
+    const metaImage = await this.imagesRepository.findUnique({
+      where: {
+        id: imageId,
+      },
+    });
 
     if (!metaImage) throw new NotFoundException('Image not found by ID.');
 
@@ -72,7 +80,11 @@ export class ImagesService {
   }
 
   async setPrimaryProductImage(imageId: number) {
-    const productImage = await this.imagesRepository.findImageById(imageId);
+    const productImage = await this.imagesRepository.findUnique({
+      where: {
+        id: imageId,
+      },
+    });
 
     if (!productImage) throw new NotFoundException('Image not found.');
 
@@ -85,13 +97,21 @@ export class ImagesService {
   }
 
   async deleteProductImage(imageId: number) {
-    const productImage = await this.imagesRepository.findImageById(imageId);
+    const productImage = await this.imagesRepository.findUnique({
+      where: {
+        id: imageId,
+      },
+    });
 
     if (!productImage) throw new NotFoundException('Image not found.');
 
     await this.storageService.deleteFile(productImage.storageKey);
 
-    await this.imagesRepository.deleteImage(imageId);
+    await this.imagesRepository.delete({
+      where: {
+        id: imageId,
+      },
+    });
 
     return {
       message: `This image was successfully deleted.`,

@@ -88,13 +88,18 @@ export class ScraperService {
   }
 
   public async findAllJobs() {
-    const jobs = await this.scraperRepository.findAllJobs();
+    const jobs = await this.scraperRepository.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+    });
 
     return ScrapeJobMapper.toResponseList(jobs);
   }
 
   public async findJobById(id: number) {
-    const job = await this.scraperRepository.findJobById(id);
+    const job = await this.scraperRepository.findUnique({
+      where: { id },
+    });
 
     if (!job) return null;
 
@@ -102,7 +107,9 @@ export class ScraperService {
   }
 
   public async deleteJob(id: number) {
-    const job = await this.scraperRepository.deleteJob(id);
+    const job = await this.scraperRepository.delete({
+      where: { id },
+    });
 
     return ScrapeJobMapper.toResponse(job);
   }

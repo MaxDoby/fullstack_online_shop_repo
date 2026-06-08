@@ -2,10 +2,15 @@ import { Injectable } from '@nestjs/common';
 import { ScrapeJobStatus } from '@prisma/client';
 import { PrismaService } from '../../core/prisma/prisma.service';
 import type { StartScrapeJobDto } from './dto/start-scrape-job.dto';
+import { BaseRepository } from '../../core/database/repositories/base.repository';
 
 @Injectable()
-export class ScraperRepository {
-  public constructor(private readonly prisma: PrismaService) {}
+export class ScraperRepository extends BaseRepository<
+  PrismaService['scrapeJob']
+> {
+  public constructor(private readonly prisma: PrismaService) {
+    super(prisma.scrapeJob);
+  }
 
   public createJob(body: StartScrapeJobDto) {
     return this.prisma.scrapeJob.create({
@@ -79,25 +84,6 @@ export class ScraperRepository {
         errorMessage,
         finishedAt: new Date(),
       },
-    });
-  }
-
-  public findAllJobs() {
-    return this.prisma.scrapeJob.findMany({
-      orderBy: { createdAt: 'desc' },
-      take: 50,
-    });
-  }
-
-  public findJobById(id: number) {
-    return this.prisma.scrapeJob.findUnique({
-      where: { id },
-    });
-  }
-
-  public deleteJob(id: number) {
-    return this.prisma.scrapeJob.delete({
-      where: { id },
     });
   }
 }

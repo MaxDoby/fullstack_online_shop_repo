@@ -102,7 +102,9 @@ export class ProductsService {
       };
     }
 
-    const product = await this.productsRepository.findById(id);
+    const product = await this.productsRepository.findUnique({
+      where: { id },
+    });
 
     if (!product || product.deletedAt)
       throw new NotFoundException('Product not found by id.');
@@ -116,7 +118,9 @@ export class ProductsService {
   }
 
   async deleteProduct(id: number) {
-    const product = await this.productsRepository.findById(id);
+    const product = await this.productsRepository.findUnique({
+      where: { id: id },
+    });
 
     if (!product || product.deletedAt)
       throw new NotFoundException('Product not found by id.');
