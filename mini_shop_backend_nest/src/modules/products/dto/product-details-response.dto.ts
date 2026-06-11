@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   ProductCategoryResponseDto,
-  ProductImageResponseDto,
+  ProductImageSummaryResponseDto,
 } from './product-response.dto';
 
 export class ProductManufacturerResponseDto {
@@ -167,9 +167,9 @@ export class ProductDetailsResponseDto {
 
   @ApiProperty({
     description: 'Product images.',
-    type: [ProductImageResponseDto],
+    type: [ProductImageSummaryResponseDto],
   })
-  public readonly productImages!: ProductImageResponseDto[];
+  public readonly productImages!: ProductImageSummaryResponseDto[];
 
   @ApiProperty({
     description: 'Product specification groups.',

@@ -5,6 +5,7 @@ import { ProductScrapeNormalizer } from './normalizers/product-scrape.normalizer
 import { ProductScrapeImporter } from './importers/product-scrape.importer';
 import { ScrapeJobMapper } from './mappers/scrape-job.mapper';
 import { ScraperRepository } from './scraper.repository';
+import { ScraperQueueProducer } from './queue/scraper-queue.producer';
 
 @Injectable()
 export class ScraperService {
@@ -13,17 +14,21 @@ export class ScraperService {
     private readonly scraperRegistry: ScraperRegistryService,
     private readonly productScrapeNormalizer: ProductScrapeNormalizer,
     private readonly productScrapeImporter: ProductScrapeImporter,
+    private readonly scraperQueueProducer: ScraperQueueProducer,
   ) {}
 
   public async startJob(body: StartScrapeJobDto) {
     const scrapeJob = await this.scraperRepository.createJob(body);
 
-    void this.runJob(scrapeJob.id, body);
+    await this.scraperQueueProducer.publishScraperJob({
+      jobId: scrapeJob.id,
+      payload: body,
+    });
 
     return ScrapeJobMapper.toResponse(scrapeJob);
   }
 
-  private async runJob(scrapeJobId: number, body: StartScrapeJobDto) {
+  public async runJob(scrapeJobId: number, body: StartScrapeJobDto) {
     try {
       const adapter = this.scraperRegistry.getAdapter(body.sourceWebsite);
 

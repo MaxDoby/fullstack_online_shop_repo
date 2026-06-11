@@ -1,0 +1,1 @@
+export const RABBITMQ_URL_CONFIG_KEY = 'RABBITMQ_URL';

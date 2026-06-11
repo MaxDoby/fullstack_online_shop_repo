@@ -1,0 +1,3 @@
+export const SCRAPER_QUEUE_CLIENT = 'SCRAPER_QUEUE_CLIENT';
+export const SCRAPER_JOB_PATTERN = 'scraper.job.started';
+export const SCRAPER_QUEUE_CONFIG_KEY = 'RABBITMQ_SCRAPER_QUEUE';

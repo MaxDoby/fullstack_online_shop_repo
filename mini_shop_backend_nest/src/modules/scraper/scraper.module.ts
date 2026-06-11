@@ -13,10 +13,23 @@ import { StorageService } from '../../core/storage/storage.service';
 import { UltraSearchAdapter } from './adapters/ultra/ultra-search.adapter';
 import { UltraProductParser } from './adapters/ultra/ultra-product.parser';
 import { ScraperRepository } from './scraper.repository';
+import { RabbitmqModule } from '../../core/messaging/rabbitmq.module';
+import {
+  SCRAPER_QUEUE_CLIENT,
+  SCRAPER_QUEUE_CONFIG_KEY,
+} from './queue/scraper-queue.constants';
+import { ScraperQueueProducer } from './queue/scraper-queue.producer';
+import { ScraperQueueConsumer } from './queue/scraper-queue.consumer';
 
 @Module({
-  imports: [AuthModule],
-  controllers: [ScraperController],
+  imports: [
+    AuthModule,
+    RabbitmqModule.registerQueue({
+      clientName: SCRAPER_QUEUE_CLIENT,
+      queueConfigKey: SCRAPER_QUEUE_CONFIG_KEY,
+    }),
+  ],
+  controllers: [ScraperController, ScraperQueueConsumer],
   providers: [
     ScraperService,
     StorageService,
@@ -29,6 +42,7 @@ import { ScraperRepository } from './scraper.repository';
     UltraSearchAdapter,
     UltraProductParser,
     ScraperRepository,
+    ScraperQueueProducer,
     {
       provide: SCRAPER_ADAPTERS,
       useFactory: (ultraAdapter: UltraSearchAdapter) => [ultraAdapter],

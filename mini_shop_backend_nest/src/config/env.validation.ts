@@ -10,4 +10,6 @@ export const envValidationSchema = Joi.object({
   S3_SECRET_KEY: Joi.string().required(),
   S3_BUCKET: Joi.string().required(),
   S3_FORCE_PATH_STYLE: Joi.boolean().default(true),
+  RABBITMQ_URL: Joi.string().required(),
+  RABBITMQ_SCRAPER_QUEUE: Joi.string().required(),
 });

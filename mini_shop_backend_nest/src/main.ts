@@ -7,6 +7,9 @@ import {
   type OpenAPIObject,
 } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
+import type { RmqOptions } from '@nestjs/microservices';
+import { createRabbitmqOptions } from './core/messaging/rabbitmq.options';
+import { SCRAPER_QUEUE_CONFIG_KEY } from './modules/scraper/queue/scraper-queue.constants';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -25,6 +28,15 @@ async function bootstrap() {
     swaggerConfig,
   );
   SwaggerModule.setup('api-docs', app, swaggerDocument);
+
+  const rabbitMqOptions: RmqOptions = createRabbitmqOptions(
+    configService,
+    SCRAPER_QUEUE_CONFIG_KEY,
+  );
+
+  app.connectMicroservice<RmqOptions>(rabbitMqOptions);
+
+  await app.startAllMicroservices();
 
   await app.listen(configService.getOrThrow<number>('PORT'));
 }
