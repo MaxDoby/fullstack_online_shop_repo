@@ -12,6 +12,7 @@ import { ImagesModule } from './modules/images/images.module';
 import { StorageModule } from './core/storage/storage.module';
 import { ScraperModule } from './modules/scraper/scraper.module';
 import { envValidationSchema } from './config/env.validation';
+import { NewsModule } from './modules/news/news.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { envValidationSchema } from './config/env.validation';
     ImagesModule,
     StorageModule,
     ScraperModule,
+    NewsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -133,7 +133,10 @@ const useCart = (userId: number | null, accessToken: string | null) => {
 				},
 			});
 
-			if (!response.ok) throw new Error('Unable to load orders.');
+			if (!response.ok) {
+				setOrderHistory([]);
+				return;
+			}
 
 			const data: BackendOrder[] = await response.json();
 			const mappedOrders = data.map(mapBackendOrderToHistory).reverse();

@@ -22,6 +22,9 @@ describe('Orders E2E', () => {
   let app: INestApplication;
   let prismaService: PrismaService;
   let httpServer: App;
+  let createdCategoryId: number | null = null;
+  let createdProductId: number | null = null;
+  let createdOrderId: number | null = null;
 
   const testUser = {
     username: `e2e_order_user_${Date.now()}`,
@@ -30,6 +33,8 @@ describe('Orders E2E', () => {
     firstName: 'E2E',
     lastName: 'Order',
   };
+
+  const testCategoryName = `E2E Test Category ${Date.now()}`;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -51,6 +56,58 @@ describe('Orders E2E', () => {
   });
 
   afterAll(async () => {
+    await prismaService.$transaction(async (tx) => {
+      if (createdOrderId) {
+        await tx.orderItem.deleteMany({
+          where: {
+            orderId: createdOrderId,
+          },
+        });
+
+        await tx.order.deleteMany({
+          where: {
+            id: createdOrderId,
+          },
+        });
+      }
+
+      if (createdProductId) {
+        await tx.orderItem.deleteMany({
+          where: {
+            productId: createdProductId,
+          },
+        });
+
+        await tx.product.deleteMany({
+          where: {
+            id: createdProductId,
+          },
+        });
+      }
+
+      await tx.order.deleteMany({
+        where: {
+          user: {
+            email: testUser.email,
+          },
+        },
+      });
+
+      if (createdCategoryId) {
+        await tx.category.deleteMany({
+          where: {
+            id: createdCategoryId,
+          },
+        });
+      }
+
+      await tx.user.deleteMany({
+        where: {
+          email: testUser.email,
+        },
+      });
+    });
+
     await prismaService.$disconnect();
     await app.close();
   });
@@ -64,10 +121,11 @@ describe('Orders E2E', () => {
     const registerBody = registerResponse.body as unknown as AuthE2EResponse;
 
     const category = await prismaService.category.upsert({
-      where: { name: 'E2E Test Category' },
+      where: { name: testCategoryName },
       update: {},
-      create: { name: 'E2E Test Category' },
+      create: { name: testCategoryName },
     });
+    createdCategoryId = category.id;
 
     const availableProduct = await prismaService.product.create({
       data: {
@@ -79,6 +137,7 @@ describe('Orders E2E', () => {
         thumbnail: '/images/e2e-product.jpg',
       },
     });
+    createdProductId = availableProduct.id;
 
     const orderResponse = await request(httpServer)
       .post('/orders')
@@ -94,6 +153,7 @@ describe('Orders E2E', () => {
       .expect(201);
 
     const orderBody = orderResponse.body as unknown as OrderE2EResponse;
+    createdOrderId = orderBody.id;
 
     expect(orderBody.id).toBeDefined();
     expect(orderBody.totalCost).toBeGreaterThan(0);

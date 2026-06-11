@@ -25,6 +25,9 @@ describe('Admin-product E2E', () => {
   let prismaService: PrismaService;
   let httpServer: App;
   let adminEmail: string;
+  let createdProductId: number | null = null;
+  let createdCategoryId: number | null = null;
+  const testCategoryName = `E2E Category ${Date.now()}`;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -61,10 +64,11 @@ describe('Admin-product E2E', () => {
     });
 
     const category = await prismaService.category.upsert({
-      where: { name: 'E2E Category' },
+      where: { name: testCategoryName },
       update: {},
-      create: { name: 'E2E Category' },
+      create: { name: testCategoryName },
     });
+    createdCategoryId = category.id;
 
     const loginResponse = await request(httpServer)
       .post('/auth/login')
@@ -93,6 +97,7 @@ describe('Admin-product E2E', () => {
 
     const productBody =
       createProductResponse.body as unknown as ProductE2EResponse;
+    createdProductId = productBody.id;
 
     expect(productBody.title).toBe('E2E Admin Product');
     expect(productBody.price).toBe(999.99);
@@ -101,9 +106,17 @@ describe('Admin-product E2E', () => {
   });
 
   afterAll(async () => {
-    await prismaService.product.deleteMany({
-      where: { title: 'E2E Admin Product' },
-    });
+    if (createdProductId) {
+      await prismaService.product.deleteMany({
+        where: { id: createdProductId },
+      });
+    }
+
+    if (createdCategoryId) {
+      await prismaService.category.deleteMany({
+        where: { id: createdCategoryId },
+      });
+    }
 
     await prismaService.user.deleteMany({
       where: { email: adminEmail },

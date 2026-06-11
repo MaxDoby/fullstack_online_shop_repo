@@ -15,6 +15,11 @@ interface ProductImage {
     createdAt?: string;
 }
 
+interface CategoryFromApi {
+    id: number;
+    name: string;
+}
+
 interface ProductFromApi {
     id: number;
     title: string;
@@ -75,8 +80,10 @@ const useProducts = () => {
 		const loadCategories = async () => {
 			try {
 				const uniqueCategories = await fetch(`${apiBaseUrl}/categories`);
-				const categoriesData: string[] = await uniqueCategories.json();
-				setCategories(['All products', ...categoriesData]);
+				const categoriesData: CategoryFromApi[] = await uniqueCategories.json();
+				const categoryNames = categoriesData.map((category) => category.name);
+
+				setCategories(['All products', ...categoryNames]);
 			} catch (error) {
 				console.error('Fetch Error:', error);
 			}

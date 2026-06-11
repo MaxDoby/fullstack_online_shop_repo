@@ -12,4 +12,5 @@ export const envValidationSchema = Joi.object({
   S3_FORCE_PATH_STYLE: Joi.boolean().default(true),
   RABBITMQ_URL: Joi.string().required(),
   RABBITMQ_SCRAPER_QUEUE: Joi.string().required(),
+  GNEWS_API_KEY: Joi.string().optional(),
 });

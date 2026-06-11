@@ -158,7 +158,12 @@ const App = () => {
 			<Routes>
 				<Route
 					path="/products"
-					element={<ProductsPage filters={productsPageFilters} productsView={productsPageView} pagination={productsPagePagination} />}
+					element={(
+						<ProductsPage
+							filters={productsPageFilters}
+							productsView={productsPageView}
+							pagination={productsPagePagination} />
+   )}
                 />
 				<Route
 					path="/cart"
