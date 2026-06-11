@@ -10,12 +10,15 @@ import { ConfigService } from '@nestjs/config';
 import type { RmqOptions } from '@nestjs/microservices';
 import { createRabbitmqOptions } from './core/messaging/rabbitmq.options';
 import { SCRAPER_QUEUE_CONFIG_KEY } from './modules/scraper/queue/scraper-queue.constants';
+import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
 
   app.useGlobalPipes(new ValidationPipe({ transform: true }));
+
+  app.useGlobalFilters(new HttpExceptionFilter());
 
   const swaggerConfig: Omit<OpenAPIObject, 'paths'> = new DocumentBuilder()
     .setTitle('Online Shop Api')

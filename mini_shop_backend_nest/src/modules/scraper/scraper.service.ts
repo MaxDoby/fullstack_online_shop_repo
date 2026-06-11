@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ScraperRegistryService } from './scraper-registry.service';
 import type { StartScrapeJobDto } from './dto/start-scrape-job.dto';
 import { ProductScrapeNormalizer } from './normalizers/product-scrape.normalizer';
@@ -17,24 +17,38 @@ export class ScraperService {
     private readonly scraperQueueProducer: ScraperQueueProducer,
   ) {}
 
+  private readonly logger = new Logger(ScraperService.name);
+
   public async startJob(body: StartScrapeJobDto) {
     const scrapeJob = await this.scraperRepository.createJob(body);
+
+    this.logger.log(`Scraper job ${scrapeJob.id} created.`);
 
     await this.scraperQueueProducer.publishScraperJob({
       jobId: scrapeJob.id,
       payload: body,
     });
 
+    this.logger.log(`Scraper job ${scrapeJob.id} queued.`);
+
     return ScrapeJobMapper.toResponse(scrapeJob);
   }
 
   public async runJob(scrapeJobId: number, body: StartScrapeJobDto) {
+    this.logger.log(`Scraper job ${scrapeJobId} started.`);
+
     try {
       const adapter = this.scraperRegistry.getAdapter(body.sourceWebsite);
 
       await this.scraperRepository.markRunning(scrapeJobId);
 
+      this.logger.log(`Scraper job ${scrapeJobId} marked as RUNNING.`);
+
       const rawProducts = await adapter.scrapeProducts(body);
+
+      this.logger.log(
+        `Scraper job ${scrapeJobId} found ${rawProducts.length} raw products.`,
+      );
 
       const normalizedProducts = rawProducts.map((rawProduct) =>
         this.productScrapeNormalizer.normalize(rawProduct),
@@ -62,9 +76,9 @@ export class ScraperService {
         } catch (error) {
           totalFailed += 1;
 
-          console.error(
-            'Product import failed:',
-            error instanceof Error ? error.message : error,
+          this.logger.error(
+            `Product import failed in scraper job ${scrapeJobId}.`,
+            error instanceof Error ? error.stack : String(error),
           );
         }
       }
@@ -76,6 +90,10 @@ export class ScraperService {
         (importedProduct) => importedProduct.action === 'updated',
       ).length;
 
+      this.logger.log(
+        `Scraper job ${scrapeJobId} completed. Imported: ${totalImported}, updated: ${totalUpdated}, failed: ${totalFailed}.`,
+      );
+
       return this.scraperRepository.markCompleted({
         id: scrapeJobId,
         totalFound: normalizedProducts.length,
@@ -84,6 +102,11 @@ export class ScraperService {
         totalFailed,
       });
     } catch (error) {
+      this.logger.error(
+        `Scraper job ${scrapeJobId} failed.`,
+        error instanceof Error ? error.stack : String(error),
+      );
+
       return this.scraperRepository.markFailed({
         id: scrapeJobId,
         errorMessage:
