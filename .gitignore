@@ -42,3 +42,5 @@ dist-ssr
 /ADMIN_PANEL_PLAN.md
 /docs/
 /scripts/
+
+.env.docker

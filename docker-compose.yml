@@ -8,7 +8,7 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: mini_shop_db
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
@@ -19,6 +19,20 @@ services:
     ports:
       - "5672:5672"
       - "15672:15672"
+
+  backend:
+    build:
+      context: ./mini_shop_backend_nest
+      dockerfile: Dockerfile
+    container_name: mini_shop_backend
+    restart: unless-stopped
+    depends_on:
+      - postgres
+      - rabbitmq
+    env_file:
+      - .env.docker
+    ports:
+      - "3000:3000"
 
 volumes:
   postgres_data:
