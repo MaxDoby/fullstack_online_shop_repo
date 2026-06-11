@@ -1,6 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { ValidationPipe } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import {
   DocumentBuilder,
   SwaggerModule,
@@ -13,6 +13,7 @@ import { SCRAPER_QUEUE_CONFIG_KEY } from './modules/scraper/queue/scraper-queue.
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 
 async function bootstrap() {
+  const logger = new Logger('Bootstrap');
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
 
@@ -39,8 +40,16 @@ async function bootstrap() {
 
   app.connectMicroservice<RmqOptions>(rabbitMqOptions);
 
-  await app.startAllMicroservices();
-
   await app.listen(configService.getOrThrow<number>('PORT'));
+
+  void app
+    .startAllMicroservices()
+    .then(() => logger.log('RabbitMQ microservice started.'))
+    .catch((error: unknown) => {
+      logger.error(
+        'RabbitMQ microservice failed to start.',
+        error instanceof Error ? error.stack : String(error),
+      );
+    });
 }
 void bootstrap();
