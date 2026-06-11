@@ -145,7 +145,7 @@ const App = () => {
 				openAuth={() => navigate('/auth')}
 				logout={logout}
 				isAuthenticated={isAuthenticated}
-				authUsername={authUser?.username || null}
+				authUsername={authUser?.firstName || authUser?.username || null}
 				openAdmin={() => navigate('/admin')}
 				isAdmin={authUser?.role === 'ADMIN'}
 				scrollToTop={scrollToTop}

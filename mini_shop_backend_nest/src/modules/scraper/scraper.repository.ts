@@ -58,8 +58,16 @@ export class ScraperRepository extends BaseRepository<
     totalImported: number;
     totalUpdated: number;
     totalFailed: number;
+    errorMessage?: string | null;
   }) {
-    const { id, totalFound, totalImported, totalUpdated, totalFailed } = params;
+    const {
+      id,
+      totalFound,
+      totalImported,
+      totalUpdated,
+      totalFailed,
+      errorMessage,
+    } = params;
 
     return this.prisma.scrapeJob.update({
       where: { id },
@@ -69,6 +77,7 @@ export class ScraperRepository extends BaseRepository<
         totalImported,
         totalUpdated,
         totalFailed,
+        errorMessage: errorMessage ?? null,
         finishedAt: new Date(),
       },
     });

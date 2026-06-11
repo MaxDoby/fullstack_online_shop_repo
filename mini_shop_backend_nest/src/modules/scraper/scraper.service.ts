@@ -94,12 +94,19 @@ export class ScraperService {
         `Scraper job ${scrapeJobId} completed. Imported: ${totalImported}, updated: ${totalUpdated}, failed: ${totalFailed}.`,
       );
 
+      let errorMessage: string | null = null;
+
+      if (totalFailed > 0) {
+        errorMessage = `${totalFailed} product(s) failed during import.`;
+      }
+
       return this.scraperRepository.markCompleted({
         id: scrapeJobId,
         totalFound: normalizedProducts.length,
         totalImported,
         totalUpdated,
         totalFailed,
+        errorMessage,
       });
     } catch (error) {
       this.logger.error(
