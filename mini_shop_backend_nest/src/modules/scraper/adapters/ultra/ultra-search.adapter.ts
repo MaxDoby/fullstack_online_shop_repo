@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import * as cheerio from 'cheerio';
 import type { StartScrapeJobDto } from '../../dto/start-scrape-job.dto';
 import type { RawScrapedProduct } from '../../interfaces/raw-scraped-product.interface';
@@ -7,12 +7,26 @@ import { ScraperHttpClient } from '../../http/scraper-http.client';
 import { UltraProductParser } from './ultra-product.parser';
 
 const defaultLimit = 20;
-const maxProductLinksToScan = 40;
-const maxSearchPagesToScan = 50;
+const maxProductLinksToScan = 30;
+const minProductLinksToScan = 10;
+const maxSearchPagesToScan = 8;
+const productPageConcurrency = 3;
+const ultraSearchTermMap: Record<string, string> = {
+  accessories: 'accesorii',
+  accessory: 'accesorii',
+  headphones: 'casti',
+  laptops: 'laptop',
+  notebooks: 'laptop',
+  phones: 'smartphone',
+  tablets: 'tablete',
+  tablet: 'tablete',
+};
 
 @Injectable()
 export class UltraSearchAdapter implements ScraperAdapter {
   public readonly sourceWebsite = 'ultra.md';
+
+  private readonly logger = new Logger(UltraSearchAdapter.name);
 
   public constructor(
     private readonly scraperHttpClient: ScraperHttpClient,
@@ -23,38 +37,125 @@ export class UltraSearchAdapter implements ScraperAdapter {
     return sourceWebsite.toLowerCase().includes('ultra.md');
   }
 
-  public async scrapeProducts(
+  public async *scrapeProducts(
     params: StartScrapeJobDto,
-  ): Promise<RawScrapedProduct[]> {
+  ): AsyncGenerator<RawScrapedProduct> {
     const baseUrl = this.getBaseUrl(params.sourceBaseUrl);
-    const products: RawScrapedProduct[] = [];
     const limit = params.limit ?? defaultLimit;
+    const maxPages = this.getMaxSearchPages(limit);
+    const maxLinksPerPage = this.getMaxProductLinksToScan(limit);
     const scannedProductUrls = new Set<string>();
+    let matchedProductsCount = 0;
 
-    for (let page = 1; page <= maxSearchPagesToScan; page += 1) {
+    for (let page = 1; page <= maxPages; page += 1) {
       const searchUrl = this.buildSearchUrl(baseUrl, params, page);
       const searchHtml = await this.scraperHttpClient.getText(searchUrl);
       const productUrls = this.extractProductUrls(searchHtml, baseUrl)
         .filter((productUrl) => !scannedProductUrls.has(productUrl))
-        .slice(0, maxProductLinksToScan);
+        .slice(0, maxLinksPerPage);
 
       if (productUrls.length === 0) continue;
 
-      for (const productUrl of productUrls) {
-        scannedProductUrls.add(productUrl);
+      this.logger.log(
+        `Ultra search page ${page}/${maxPages}: ${productUrls.length} product candidates selected.`,
+      );
 
-        const productHtml = await this.scraperHttpClient.getText(productUrl);
-        const product = this.ultraProductParser.parse(productHtml, productUrl);
+      productUrls.forEach((productUrl) => scannedProductUrls.add(productUrl));
 
-        if (!product) continue;
-        if (!this.matchesFilters(product, params)) continue;
+      for (const productUrlBatch of this.chunkProductUrls(productUrls)) {
+        const products = await Promise.all(
+          productUrlBatch.map((productUrl) =>
+            this.loadMatchingProduct(productUrl, params),
+          ),
+        );
 
-        products.push(product);
+        for (const product of products) {
+          if (!product) continue;
 
-        if (products.length >= limit) return products;
+          matchedProductsCount += 1;
+          yield product;
+
+          if (matchedProductsCount >= limit) return;
+        }
       }
     }
-    return products;
+  }
+
+  private async loadMatchingProduct(
+    productUrl: string,
+    params: StartScrapeJobDto,
+  ): Promise<RawScrapedProduct | null> {
+    try {
+      const productHtml = await this.scraperHttpClient.getText(productUrl);
+      const product = this.ultraProductParser.parse(productHtml, productUrl);
+
+      if (!product) return null;
+      if (!this.matchesFilters(product, params)) return null;
+
+      return product;
+    } catch {
+      return null;
+    }
+  }
+
+  private getMaxSearchPages(limit: number): number {
+    return Math.min(
+      maxSearchPagesToScan,
+      Math.max(2, Math.ceil(limit / 10) + 1),
+    );
+  }
+
+  private getMaxProductLinksToScan(limit: number): number {
+    return Math.min(
+      maxProductLinksToScan,
+      Math.max(minProductLinksToScan, limit * 3),
+    );
+  }
+
+  private chunkProductUrls(productUrls: string[]): string[][] {
+    const chunks: string[][] = [];
+
+    for (
+      let index = 0;
+      index < productUrls.length;
+      index += productPageConcurrency
+    ) {
+      chunks.push(productUrls.slice(index, index + productPageConcurrency));
+    }
+
+    return chunks;
+  }
+
+  private extractProductUrls(html: string, baseUrl: string): string[] {
+    const $ = cheerio.load(html);
+
+    const urls = $('a[href]')
+      .toArray()
+      .map((element) => {
+        const href = $(element).attr('href');
+
+        return href ? this.toAbsoluteUrl(href, baseUrl) : null;
+      })
+      .filter((url): url is string => {
+        if (!url) return false;
+
+        return this.isProductCandidateUrl(url, baseUrl);
+      });
+
+    return [...new Set(urls)];
+  }
+
+  private isProductCandidateUrl(url: string, baseUrl: string): boolean {
+    try {
+      const parsedUrl = new URL(url);
+      const parsedBaseUrl = new URL(baseUrl);
+
+      if (parsedUrl.origin !== parsedBaseUrl.origin) return false;
+
+      return parsedUrl.pathname.includes('/product/');
+    } catch {
+      return false;
+    }
   }
 
   private buildSearchUrl(
@@ -69,6 +170,7 @@ export class UltraSearchAdapter implements ScraperAdapter {
       params.searchText,
     ]
       .filter((value): value is string => Boolean(value?.trim()))
+      .map((value) => this.toUltraSearchTerm(value))
       .join(' ');
 
     const url = new URL('/search', baseUrl);
@@ -76,21 +178,6 @@ export class UltraSearchAdapter implements ScraperAdapter {
     url.searchParams.set('page', String(page));
 
     return url.href;
-  }
-
-  private extractProductUrls(html: string, baseUrl: string): string[] {
-    const $ = cheerio.load(html);
-
-    const urls = $('a[href*="/product/"]')
-      .toArray()
-      .map((element) => {
-        const href = $(element).attr('href');
-
-        return href ? this.toAbsoluteUrl(href, baseUrl) : null;
-      })
-      .filter((url): url is string => Boolean(url));
-
-    return [...new Set(urls)];
   }
 
   private matchesFilters(
@@ -165,6 +252,12 @@ export class UltraSearchAdapter implements ScraperAdapter {
     }
   }
 
+  private toUltraSearchTerm(value: string): string {
+    const normalizedValue = this.normalizeForSearch(value);
+
+    return ultraSearchTermMap[normalizedValue] ?? value;
+  }
+
   private normalizeForSearch(value: string): string {
     return Array.from(value.normalize('NFD').toLowerCase())
       .filter((char) => {
@@ -175,6 +268,11 @@ export class UltraSearchAdapter implements ScraperAdapter {
       .join('')
       .replaceAll('-', ' ')
       .replaceAll('_', ' ')
-      .replaceAll('/', ' ');
+      .replaceAll('/', ' ')
+      .replaceAll('laptops', 'laptop')
+      .replaceAll('notebooks', 'notebook')
+      .replaceAll('phones', 'phone')
+      .replaceAll('smartphones', 'smartphone')
+      .replaceAll('tablets', 'tablet');
   }
 }

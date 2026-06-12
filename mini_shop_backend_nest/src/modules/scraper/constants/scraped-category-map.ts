@@ -28,6 +28,10 @@ export const SCRAPED_CATEGORY_MAP: Record<string, string> = {
   accessory: 'Accessories',
   'accesorii telefoane mobile': 'Accessories',
   'accesorii pentru telefoane': 'Accessories',
+  'accesorii pentru aspiratoare': 'Accessories',
+  'accesorii pentru electrocasnice': 'Accessories',
+  'cabluri si adaptoare audio': 'Accessories',
+  'cabluri și adaptoare audio': 'Accessories',
 
   tablete: 'Tablets',
   tablet: 'Tablets',

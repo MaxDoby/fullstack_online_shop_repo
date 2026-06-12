@@ -6,5 +6,5 @@ export interface ScraperAdapter {
 
   canHandle(sourceWebsite: string): boolean;
 
-  scrapeProducts(params: StartScrapeJobDto): Promise<RawScrapedProduct[]>;
+  scrapeProducts(params: StartScrapeJobDto): AsyncGenerator<RawScrapedProduct>;
 }

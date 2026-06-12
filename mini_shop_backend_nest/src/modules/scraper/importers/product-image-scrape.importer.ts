@@ -6,6 +6,8 @@ import { StorageService } from '../../../core/storage/storage.service';
 import { ScraperHttpClient } from '../http/scraper-http.client';
 import type { NormalizedProductImage } from '../interfaces/normalized-product.interface';
 
+const imageImportConcurrency = 3;
+
 @Injectable()
 export class ProductImageScrapeImporter {
   public constructor(
@@ -23,17 +25,35 @@ export class ProductImageScrapeImporter {
     let imported = 0;
     let failed = 0;
 
-    for (const image of images) {
-      try {
-        await this.importSingleProductImage(productId, image, imported === 0);
-        imported += 1;
-      } catch (error) {
-        console.error(
-          'Scraped image import failed:',
-          error instanceof Error ? error.message : error,
-        );
-        failed += 1;
-        continue;
+    const imageEntries = images.map((image, index) => ({
+      image,
+      isPrimary: index === 0,
+    }));
+
+    for (const imageBatch of this.chunkImages(imageEntries)) {
+      const results = await Promise.all(
+        imageBatch.map(async ({ image, isPrimary }) => {
+          try {
+            await this.importSingleProductImage(productId, image, isPrimary);
+
+            return true;
+          } catch (error) {
+            console.error(
+              'Scraped image import failed:',
+              error instanceof Error ? error.message : error,
+            );
+
+            return false;
+          }
+        }),
+      );
+
+      for (const isImported of results) {
+        if (isImported) {
+          imported += 1;
+        } else {
+          failed += 1;
+        }
       }
     }
 
@@ -82,5 +102,22 @@ export class ProductImageScrapeImporter {
         isPrimary,
       },
     });
+  }
+
+  private chunkImages(
+    images: { image: NormalizedProductImage; isPrimary: boolean }[],
+  ): { image: NormalizedProductImage; isPrimary: boolean }[][] {
+    const chunks: { image: NormalizedProductImage; isPrimary: boolean }[][] =
+      [];
+
+    for (
+      let index = 0;
+      index < images.length;
+      index += imageImportConcurrency
+    ) {
+      chunks.push(images.slice(index, index + imageImportConcurrency));
+    }
+
+    return chunks;
   }
 }

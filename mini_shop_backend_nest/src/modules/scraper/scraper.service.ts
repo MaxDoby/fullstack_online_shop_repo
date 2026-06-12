@@ -44,27 +44,17 @@ export class ScraperService {
 
       this.logger.log(`Scraper job ${scrapeJobId} marked as RUNNING.`);
 
-      const rawProducts = await adapter.scrapeProducts(body);
-
-      this.logger.log(
-        `Scraper job ${scrapeJobId} found ${rawProducts.length} raw products.`,
-      );
-
-      const normalizedProducts = rawProducts.map((rawProduct) =>
-        this.productScrapeNormalizer.normalize(rawProduct),
-      );
-
-      if (normalizedProducts.length === 0) {
-        return this.scraperRepository.markCompletedWithNoProducts(scrapeJobId);
-      }
-
-      const importedProducts: Awaited<
-        ReturnType<typeof this.productScrapeImporter.importProduct>
-      >[] = [];
-
+      let totalFound: number = 0;
+      let totalImported: number = 0;
+      let totalUpdated: number = 0;
       let totalFailed: number = 0;
 
-      for (const normalizedProduct of normalizedProducts) {
+      for await (const rawProduct of adapter.scrapeProducts(body)) {
+        totalFound += 1;
+
+        const normalizedProduct =
+          this.productScrapeNormalizer.normalize(rawProduct);
+
         try {
           const importedProduct =
             await this.productScrapeImporter.importProduct(
@@ -72,7 +62,12 @@ export class ScraperService {
               scrapeJobId,
             );
 
-          importedProducts.push(importedProduct);
+          if (importedProduct.action === 'created') totalImported += 1;
+          if (importedProduct.action === 'updated') totalUpdated += 1;
+
+          this.logger.log(
+            `Scraper job ${scrapeJobId} processed product ${totalFound}: ${normalizedProduct.title}.`,
+          );
         } catch (error) {
           totalFailed += 1;
 
@@ -83,12 +78,9 @@ export class ScraperService {
         }
       }
 
-      const totalImported = importedProducts.filter(
-        (importedProduct) => importedProduct.action === 'created',
-      ).length;
-      const totalUpdated = importedProducts.filter(
-        (importedProduct) => importedProduct.action === 'updated',
-      ).length;
+      if (totalFound === 0) {
+        return this.scraperRepository.markCompletedWithNoProducts(scrapeJobId);
+      }
 
       this.logger.log(
         `Scraper job ${scrapeJobId} completed. Imported: ${totalImported}, updated: ${totalUpdated}, failed: ${totalFailed}.`,
@@ -102,7 +94,7 @@ export class ScraperService {
 
       return this.scraperRepository.markCompleted({
         id: scrapeJobId,
-        totalFound: normalizedProducts.length,
+        totalFound,
         totalImported,
         totalUpdated,
         totalFailed,
