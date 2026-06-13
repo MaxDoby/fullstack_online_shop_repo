@@ -1,27 +1,32 @@
 import { useEffect, useState } from 'react';
 
 export interface ScraperJob {
-	id: number;
-	sourceWebsite: string;
-	sourceBaseUrl: string;
-	manufacturer: string | null;
-	productType: string | null;
-	searchText: string | null;
-	minPrice: number | null;
-	maxPrice: number | null;
-	status: 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED' | 'CANCELED';
-	totalFound: number;
-	totalImported: number;
-	totalUpdated: number;
-	totalFailed: number;
-	errorMessage: string | null;
-	createdAt: string;
-	finishedAt: string | null;
+    id: number;
+    sourceWebsite: string;
+    sourceBaseUrl: string;
+    targetCategory: {
+        id: number;
+        name: string;
+    } | null;
+    manufacturer: string | null;
+    productType: string | null;
+    searchText: string | null;
+    minPrice: number | null;
+    maxPrice: number | null;
+    status: 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED' | 'CANCELED';
+    totalFound: number;
+    totalImported: number;
+    totalUpdated: number;
+    totalFailed: number;
+    errorMessage: string | null;
+    createdAt: string;
+    finishedAt: string | null;
 }
 
 export interface StartScraperJobPayload {
     sourceWebsite: string;
     sourceBaseUrl: string;
+    targetCategoryId: number;
     productType?: string;
     manufacturer?: string;
     model?: string;

@@ -1,20 +1,20 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ScraperRegistryService } from './scraper-registry.service';
 import type { StartScrapeJobDto } from './dto/start-scrape-job.dto';
 import { ProductScrapeNormalizer } from './normalizers/product-scrape.normalizer';
 import { ProductScrapeImporter } from './importers/product-scrape.importer';
 import { ScrapeJobMapper } from './mappers/scrape-job.mapper';
 import { ScraperRepository } from './scraper.repository';
 import { ScraperQueueProducer } from './queue/scraper-queue.producer';
+import { UniversalScraperEngine } from './engine/scraper-engine';
 
 @Injectable()
 export class ScraperService {
   public constructor(
     private readonly scraperRepository: ScraperRepository,
-    private readonly scraperRegistry: ScraperRegistryService,
     private readonly productScrapeNormalizer: ProductScrapeNormalizer,
     private readonly productScrapeImporter: ProductScrapeImporter,
     private readonly scraperQueueProducer: ScraperQueueProducer,
+    private readonly universalScraperEngine: UniversalScraperEngine,
   ) {}
 
   private readonly logger = new Logger(ScraperService.name);
@@ -38,8 +38,6 @@ export class ScraperService {
     this.logger.log(`Scraper job ${scrapeJobId} started.`);
 
     try {
-      const adapter = this.scraperRegistry.getAdapter(body.sourceWebsite);
-
       await this.scraperRepository.markRunning(scrapeJobId);
 
       this.logger.log(`Scraper job ${scrapeJobId} marked as RUNNING.`);
@@ -49,7 +47,9 @@ export class ScraperService {
       let totalUpdated: number = 0;
       let totalFailed: number = 0;
 
-      for await (const rawProduct of adapter.scrapeProducts(body)) {
+      for await (const rawProduct of this.universalScraperEngine.scrapeProducts(
+        body,
+      )) {
         totalFound += 1;
 
         const normalizedProduct =
@@ -60,6 +60,7 @@ export class ScraperService {
             await this.productScrapeImporter.importProduct(
               normalizedProduct,
               scrapeJobId,
+              body.targetCategoryId,
             );
 
           if (importedProduct.action === 'created') totalImported += 1;
@@ -115,18 +116,13 @@ export class ScraperService {
   }
 
   public async findAllJobs() {
-    const jobs = await this.scraperRepository.findMany({
-      orderBy: { createdAt: 'desc' },
-      take: 50,
-    });
+    const jobs = await this.scraperRepository.findManyWithTargetCategory();
 
     return ScrapeJobMapper.toResponseList(jobs);
   }
 
   public async findJobById(id: number) {
-    const job = await this.scraperRepository.findUnique({
-      where: { id },
-    });
+    const job = await this.scraperRepository.findUniqueWithTargetCategory(id);
 
     if (!job) return null;
 
@@ -134,9 +130,7 @@ export class ScraperService {
   }
 
   public async deleteJob(id: number) {
-    const job = await this.scraperRepository.delete({
-      where: { id },
-    });
+    const job = await this.scraperRepository.deleteWithTargetCategory(id);
 
     return ScrapeJobMapper.toResponse(job);
   }

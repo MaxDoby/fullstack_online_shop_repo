@@ -1118,8 +1118,20 @@ input {
 	margin-bottom: 16px;
 }
 
+.admin-scraper-field {
+	display: flex;
+	flex-direction: column;
+	gap: 0;
+	min-width: 0;
+}
+
+.admin-scraper-field-wide {
+	grid-column: span 2;
+}
+
 .admin-scraper-form input, .admin-scraper-form select {
 	width: 100%;
+	height: 42px;
 	min-height: 42px;
 	padding: 10px 12px;
 	color: white;
@@ -1137,6 +1149,18 @@ input {
 .admin-scraper-form select option {
 	color: white;
 	background: #181824;
+}
+
+.admin-scraper-help-text {
+	margin: 0;
+	color: rgba(255, 255, 255, 0.58);
+	font-size: 0.8rem;
+	font-style: italic;
+	line-height: 1.15;
+}
+
+.admin-scraper-form .admin-scraper-help-text {
+	margin: 1px 0 1px;
 }
 
 .admin-scraper-form input:focus,

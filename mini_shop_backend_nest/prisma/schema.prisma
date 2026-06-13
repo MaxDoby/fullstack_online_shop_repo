@@ -30,6 +30,7 @@ model Category {
   id       Int       @id @default(autoincrement())
   name     String    @unique
   products Product[]
+  scrapeJobs ScrapeJob[]
 }
 
 model User {
@@ -132,6 +133,8 @@ model ScrapeJob {
   sourceBaseUrl  String
   manufacturer   String?
   productType    String?
+  targetCategoryId Int?
+  targetCategory   Category? @relation(fields: [targetCategoryId], references: [id])
   model          String?
   description    String?
   searchText     String?

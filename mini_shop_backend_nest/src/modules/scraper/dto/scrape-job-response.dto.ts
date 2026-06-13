@@ -1,5 +1,21 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
+export class ScrapeJobTargetCategoryDto {
+  @ApiProperty({
+    description:
+      'Internal category id selected by admin for imported products.',
+    example: 1,
+  })
+  public readonly id!: number;
+
+  @ApiProperty({
+    description:
+      'Internal category name selected by admin for imported products.',
+    example: 'Audio',
+  })
+  public readonly name!: string;
+}
+
 export class ScrapeJobResponseDto {
   @ApiProperty({
     description: 'Unique scraper job identifier.',
@@ -20,18 +36,18 @@ export class ScrapeJobResponseDto {
   public readonly sourceBaseUrl!: string;
 
   @ApiPropertyOptional({
+    description: 'Internal target category selected by admin.',
+    type: ScrapeJobTargetCategoryDto,
+    nullable: true,
+  })
+  public readonly targetCategory!: ScrapeJobTargetCategoryDto | null;
+
+  @ApiPropertyOptional({
     description: 'Requested manufacturer filter.',
     example: 'Apple',
     nullable: true,
   })
   public readonly manufacturer!: string | null;
-
-  @ApiPropertyOptional({
-    description: 'Requested product type filter.',
-    example: 'smartphone',
-    nullable: true,
-  })
-  public readonly productType!: string | null;
 
   @ApiPropertyOptional({
     description: 'Requested product model filter.',

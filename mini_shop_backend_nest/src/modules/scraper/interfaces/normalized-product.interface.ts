@@ -3,7 +3,6 @@ export interface NormalizedProduct {
   description: string;
   price: number;
   stock: number;
-  categoryName: string;
   thumbnail: string;
   manufacturerName?: string;
   sourceWebsite: string;

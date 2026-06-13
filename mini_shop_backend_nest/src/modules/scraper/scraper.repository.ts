@@ -19,11 +19,34 @@ export class ScraperRepository extends BaseRepository<
         sourceBaseUrl: body.sourceBaseUrl,
         manufacturer: body.manufacturer,
         productType: body.productType,
+        targetCategoryId: body.targetCategoryId,
         model: body.model,
         searchText: body.searchText,
         minPrice: body.minPrice,
         maxPrice: body.maxPrice,
         status: ScrapeJobStatus.PENDING,
+      },
+      include: {
+        targetCategory: true,
+      },
+    });
+  }
+
+  public findManyWithTargetCategory() {
+    return this.prisma.scrapeJob.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+      include: {
+        targetCategory: true,
+      },
+    });
+  }
+
+  public findUniqueWithTargetCategory(id: number) {
+    return this.prisma.scrapeJob.findUnique({
+      where: { id },
+      include: {
+        targetCategory: true,
       },
     });
   }
@@ -92,6 +115,15 @@ export class ScraperRepository extends BaseRepository<
         status: ScrapeJobStatus.FAILED,
         errorMessage,
         finishedAt: new Date(),
+      },
+    });
+  }
+
+  public deleteWithTargetCategory(id: number) {
+    return this.prisma.scrapeJob.delete({
+      where: { id },
+      include: {
+        targetCategory: true,
       },
     });
   }

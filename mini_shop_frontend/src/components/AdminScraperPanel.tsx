@@ -1,5 +1,8 @@
-import { useState, type SubmitEvent, type ChangeEvent } from 'react';
+import {
+	useState, type SubmitEvent, type ChangeEvent,
+} from 'react';
 import useScraperJobs, { type StartScraperJobPayload } from '../hooks/useScraperJobs';
+import useAdminCategories from '../hooks/useAdminCategories';
 
 interface AdminScraperPanelProps {
     accessToken: string | null;
@@ -11,9 +14,12 @@ const AdminScraperPanel = ({ accessToken, onProductsChanged }: AdminScraperPanel
 		scraperJobs, scraperJobsError, isScraperJobLoading, loadScraperJobs, startScraperJob, deleteScraperJob,
 	} = useScraperJobs(accessToken);
 
+	const { categories, categoriesError } = useAdminCategories();
+
 	const [formData, setFormData] = useState({
 		sourceWebsite: 'ultra.md',
 		sourceBaseUrl: 'https://ultra.md',
+		targetCategoryId: '',
 		productType: '',
 		manufacturer: '',
 		model: '',
@@ -23,7 +29,7 @@ const AdminScraperPanel = ({ accessToken, onProductsChanged }: AdminScraperPanel
 		limit: '1',
 	});
 
-	const handleInputChange = (event: ChangeEvent<HTMLInputElement>) => {
+	const handleInputChange = (event: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
 		const { name, value } = event.target;
 
 		setFormData((currentData) => ({
@@ -38,6 +44,7 @@ const AdminScraperPanel = ({ accessToken, onProductsChanged }: AdminScraperPanel
 		const payload: StartScraperJobPayload = {
 			sourceWebsite: formData.sourceWebsite,
 			sourceBaseUrl: formData.sourceBaseUrl,
+			targetCategoryId: Number(formData.targetCategoryId),
 			productType: formData.productType || undefined,
 			manufacturer: formData.manufacturer || undefined,
 			model: formData.model || undefined,
@@ -67,29 +74,66 @@ const AdminScraperPanel = ({ accessToken, onProductsChanged }: AdminScraperPanel
 			</div>
 
 			{scraperJobsError && <p>{scraperJobsError}</p>}
+			{categoriesError && <p>{categoriesError}</p>}
 
 			<form id="admin-scraper-form" className="admin-scraper-form" onSubmit={handleSubmitScraperJob}>
-				<input name="sourceWebsite" value={formData.sourceWebsite} onChange={handleInputChange} placeholder="Sursa: ex: ultra.md" />
+				<div className="admin-scraper-field">
+					<p className="admin-scraper-help-text">*de unde importam</p>
+					<input name="sourceWebsite" value={formData.sourceWebsite} onChange={handleInputChange} placeholder="Sursa: ex: ultra.md" />
+				</div>
 
-				<input
-					name="sourceBaseUrl"
-					value={formData.sourceBaseUrl}
-					onChange={handleInputChange}
-					placeholder="URL sursa: ex: https://ultra.md"
-                />
+				<div className="admin-scraper-field">
+					<p className="admin-scraper-help-text">*adresa sursei</p>
+					<input
+						name="sourceBaseUrl"
+						value={formData.sourceBaseUrl}
+						onChange={handleInputChange}
+						placeholder="URL sursa: ex: https://ultra.md"
+                    />
+				</div>
 
-				<input name="productType" value={formData.productType} onChange={handleInputChange} placeholder="Tip produs: ex: smartphone" />
+				<div className="admin-scraper-field">
+					<p className="admin-scraper-help-text">*unde vom importa</p>
+					<select name="targetCategoryId" value={formData.targetCategoryId} onChange={handleInputChange} required>
+						<option value="">Alege categoria interna</option>
+						{categories.map((category) => (
+							<option key={category.id} value={category.id}>
+								{category.name}
+							</option>
+                        ))}
+					</select>
+				</div>
 
-				<input name="manufacturer" value={formData.manufacturer} onChange={handleInputChange} placeholder="Producator: ex: Apple" />
+				<div className="admin-scraper-field">
+					<p className="admin-scraper-help-text">*ce vom importa</p>
+					<input
+						name="productType"
+						value={formData.productType}
+						onChange={handleInputChange}
+						placeholder="Tip produs: ex: tablet, casti, laptop"
+                    />
+				</div>
 
-				<input name="model" value={formData.model} onChange={handleInputChange} placeholder="Model: ex: iPhone 15" />
+				<div className="admin-scraper-field">
+					<input name="manufacturer" value={formData.manufacturer} onChange={handleInputChange} placeholder="Producator: ex: Apple" />
+				</div>
 
-				<input
-					name="searchText"
-					value={formData.searchText}
-					onChange={handleInputChange}
-					placeholder="Descriere: ex: smartphone iPhone 15 Pro Max"
-                />
+				<div className="admin-scraper-field">
+					<input name="model" value={formData.model} onChange={handleInputChange} placeholder="Model: ex: iPhone 15" />
+				</div>
+
+				<div className="admin-scraper-field admin-scraper-field-wide">
+					<input
+						name="searchText"
+						value={formData.searchText}
+						onChange={handleInputChange}
+						placeholder="Descriere: ex: smartphone iPhone 15 Pro Max"
+                    />
+
+					<p className="admin-scraper-help-text">
+						*foloseste acest camp pentru cautari generale cand modelul nu este cunoscut: casti, boxa portabila, laptop gaming.
+					</p>
+				</div>
 
 				<input name="minPrice" type="number" value={formData.minPrice} onChange={handleInputChange} placeholder="Pret minim: ex: 1" />
 
@@ -104,6 +148,7 @@ const AdminScraperPanel = ({ accessToken, onProductsChanged }: AdminScraperPanel
 						<tr>
 							<th>ID</th>
 							<th>Source</th>
+							<th>Category</th>
 							<th>Type</th>
 							<th>Status</th>
 							<th>Found</th>
@@ -122,6 +167,7 @@ const AdminScraperPanel = ({ accessToken, onProductsChanged }: AdminScraperPanel
 							<tr key={job.id}>
 								<td>{job.id}</td>
 								<td>{job.sourceWebsite}</td>
+								<td>{job.targetCategory?.name ?? '-'}</td>
 								<td>{job.productType ?? '-'}</td>
 								<td>{job.status}</td>
 								<td>{job.totalFound}</td>
@@ -140,7 +186,11 @@ const AdminScraperPanel = ({ accessToken, onProductsChanged }: AdminScraperPanel
 									</button>
                                     )}
 
-									<button type="button" className="btn-filter admin-scraper-action-button admin-scraper-delete-button" onClick={() => deleteScraperJob(job.id)}>
+									<button
+										type="button"
+										className="btn-filter admin-scraper-action-button admin-scraper-delete-button"
+										onClick={() => deleteScraperJob(job.id)}
+                                    >
 										Delete
 									</button>
 								</td>

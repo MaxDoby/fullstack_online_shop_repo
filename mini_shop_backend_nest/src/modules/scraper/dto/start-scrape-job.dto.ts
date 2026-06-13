@@ -28,6 +28,16 @@ export class StartScrapeJobDto {
   @IsNotEmpty()
   public readonly sourceBaseUrl!: string;
 
+  @ApiProperty({
+    description: 'Internal category id where imported products will be saved.',
+    example: 1,
+  })
+  @Type(() => Number)
+  @IsNumber()
+  @IsPositive()
+  @IsNotEmpty()
+  public readonly targetCategoryId!: number;
+
   @ApiPropertyOptional({
     description: 'Optional manufacturer filter used by the scraper.',
     example: 'Xiaomi',
@@ -37,8 +47,8 @@ export class StartScrapeJobDto {
   public readonly manufacturer?: string;
 
   @ApiPropertyOptional({
-    description: 'Product type filter used by the scraper.',
-    example: 'smartphone',
+    description: 'Product type search context used by the scraper.',
+    example: 'tablet',
   })
   @IsOptional()
   @IsString()

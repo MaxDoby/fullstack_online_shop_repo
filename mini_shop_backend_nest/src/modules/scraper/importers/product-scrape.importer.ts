@@ -4,7 +4,6 @@ import { PrismaService } from '../../../core/prisma/prisma.service';
 import type { NormalizedProduct } from '../interfaces/normalized-product.interface';
 import { ProductMetadataScrapeImporter } from './product-metadata-scrape.importer';
 import { ProductImageScrapeImporter } from './product-image-scrape.importer';
-import { SCRAPED_CATEGORY_MAP } from '../constants/scraped-category-map';
 
 export interface ProductScrapeImportResult {
   productId: number;
@@ -24,16 +23,17 @@ export class ProductScrapeImporter {
   public async importProduct(
     product: NormalizedProduct,
     scrapeJobId: number,
+    targetCategoryId: number,
   ): Promise<ProductScrapeImportResult> {
     const importResult = await this.prisma.$transaction(async (tx) => {
-      const categoryName = this.getExistingCategoryName(product.categoryName);
-
       const category = await tx.category.findUnique({
-        where: { name: categoryName },
+        where: { id: targetCategoryId },
       });
 
       if (!category) {
-        throw new Error(`Category "${categoryName}" does not exist.`);
+        throw new Error(
+          `Target category with id "${targetCategoryId}" does not exist.`,
+        );
       }
 
       const manufacturer = product.manufacturerName
@@ -114,12 +114,6 @@ export class ProductScrapeImporter {
     );
 
     return importResult;
-  }
-
-  private getExistingCategoryName(scrapedCategoryName: string): string {
-    const normalizedCategoryName = scrapedCategoryName.trim().toLowerCase();
-
-    return SCRAPED_CATEGORY_MAP[normalizedCategoryName] ?? scrapedCategoryName;
   }
 
   private async findOrCreateManufacturer(

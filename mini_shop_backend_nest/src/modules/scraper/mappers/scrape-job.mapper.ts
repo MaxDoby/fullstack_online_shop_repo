@@ -4,8 +4,11 @@ type ScrapeJobEntity = {
   id: number;
   sourceWebsite: string;
   sourceBaseUrl: string;
+  targetCategory: {
+    id: number;
+    name: string;
+  } | null;
   manufacturer: string | null;
-  productType: string | null;
   model: string | null;
   description: string | null;
   searchText: string | null;
@@ -28,8 +31,13 @@ export class ScrapeJobMapper {
       id: job.id,
       sourceWebsite: job.sourceWebsite,
       sourceBaseUrl: job.sourceBaseUrl,
+      targetCategory: job.targetCategory
+        ? {
+            id: job.targetCategory.id,
+            name: job.targetCategory.name,
+          }
+        : null,
       manufacturer: job.manufacturer,
-      productType: job.productType,
       model: job.model,
       description: job.description,
       searchText: job.searchText,

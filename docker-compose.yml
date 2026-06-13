@@ -21,6 +21,8 @@ services:
       - "15672:15672"
 
   backend:
+    profiles:
+    - fullstack
     build:
       context: ./mini_shop_backend_nest
       dockerfile: Dockerfile
