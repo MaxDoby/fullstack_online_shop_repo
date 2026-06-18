@@ -8,15 +8,8 @@ export class ProductLinkExtractor {
     html: string,
     baseUrl: string,
     query: string,
-    productLinkSelector?: string,
   ): string[] {
     const $ = cheerio.load(html);
-    const profileLinks = productLinkSelector
-      ? this.extractLinksBySelector($, baseUrl, productLinkSelector)
-      : [];
-
-    if (profileLinks.length > 0) return profileLinks;
-
     const queryTokens = toSearchTokens(query);
     const links = $('a[href]')
       .toArray()
@@ -31,14 +24,15 @@ export class ProductLinkExtractor {
         const card = $(element).closest(
           'article, li, [class*="product"], [class*="card"], [class*="item"], [data-product]',
         );
-        const text = [
+        const directText = [
           $(element).text(),
           $(element).find('img').attr('alt'),
-          card.text(),
         ].join(' ');
+        const cardText = [directText, card.text()].join(' ');
         const score = this.scoreCandidate({
           url: absoluteUrl,
-          text,
+          directText,
+          cardText,
           queryTokens,
         });
 
@@ -52,59 +46,30 @@ export class ProductLinkExtractor {
     return [...new Set(links.map((candidate) => candidate.url))];
   }
 
-  private extractLinksBySelector(
-    $: cheerio.CheerioAPI,
-    baseUrl: string,
-    productLinkSelector: string,
-  ): string[] {
-    try {
-      return [
-        ...new Set(
-          $(productLinkSelector)
-            .toArray()
-            .map((element) => {
-              const href = $(element).attr('href');
-              const absoluteUrl = href
-                ? this.toAbsoluteUrl(href, baseUrl)
-                : null;
-
-              if (!absoluteUrl || !this.isInternalUrl(absoluteUrl, baseUrl)) {
-                return null;
-              }
-
-              const path = new URL(absoluteUrl).pathname.toLowerCase();
-
-              return this.isBlockedPath(path) ? null : absoluteUrl;
-            })
-            .filter((url): url is string => Boolean(url)),
-        ),
-      ];
-    } catch {
-      return [];
-    }
-  }
-
   private scoreCandidate(params: {
     url: string;
-    text: string;
+    directText: string;
+    cardText: string;
     queryTokens: string[];
   }): number {
-    const { url, text, queryTokens } = params;
+    const { url, directText, cardText, queryTokens } = params;
     const parsedUrl = new URL(url);
     const path = parsedUrl.pathname.toLowerCase();
-    const textTokens = toSearchTokens(text);
+    const directTextTokens = toSearchTokens(directText);
+    const cardTextTokens = toSearchTokens(cardText);
     const pathTokens = toSearchTokens(path);
-    const allTokens = [...pathTokens, ...textTokens];
+    const primaryTokens = [...pathTokens, ...directTextTokens];
 
     if (this.isBlockedPath(path)) return 0;
 
     const matchedQueryTokens = queryTokens.filter((queryToken) =>
-      allTokens.some((token) => this.tokenMatches(token, queryToken)),
+      primaryTokens.some((token) => this.tokenMatches(token, queryToken)),
     ).length;
-    const hasProductTextSignal = textTokens.length >= 3;
-    const hasPriceSignal = /\d[\d\s.,]*(lei|mdl|ron|eur|€)/i.test(text);
+    const requiredQueryMatches = Math.min(queryTokens.length, 2);
+    const hasProductTextSignal = directTextTokens.length >= 3;
+    const hasPriceSignal = /\d[\d\s.,]*(lei|mdl|ron|eur)/i.test(cardText);
 
-    if (matchedQueryTokens === 0 && !hasPriceSignal) return 0;
+    if (matchedQueryTokens < requiredQueryMatches) return 0;
 
     let score = 0;
 
@@ -112,8 +77,40 @@ export class ProductLinkExtractor {
     if (hasProductTextSignal) score += 15;
 
     score += matchedQueryTokens * 15;
+    score += this.scorePrimaryQueryTokenPosition({
+      pathTokens,
+      textTokens:
+        directTextTokens.length > 0 ? directTextTokens : cardTextTokens,
+      queryTokens,
+    });
 
     return score;
+  }
+
+  private scorePrimaryQueryTokenPosition(params: {
+    pathTokens: string[];
+    textTokens: string[];
+    queryTokens: string[];
+  }): number {
+    const { pathTokens, textTokens, queryTokens } = params;
+    const [primaryQueryToken] = queryTokens;
+
+    if (!primaryQueryToken) return 0;
+
+    if (this.tokenMatches(pathTokens[0] ?? '', primaryQueryToken)) return 80;
+    if (this.tokenMatches(textTokens[0] ?? '', primaryQueryToken)) return 60;
+
+    const pathTokenIndex = pathTokens.findIndex((token) =>
+      this.tokenMatches(token, primaryQueryToken),
+    );
+    const textTokenIndex = textTokens.findIndex((token) =>
+      this.tokenMatches(token, primaryQueryToken),
+    );
+
+    if (pathTokenIndex > 0 && pathTokenIndex <= 3) return 25;
+    if (textTokenIndex > 0 && textTokenIndex <= 3) return 20;
+
+    return 0;
   }
 
   private isBlockedPath(path: string): boolean {

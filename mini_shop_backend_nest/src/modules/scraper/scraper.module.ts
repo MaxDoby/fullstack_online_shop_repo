@@ -24,8 +24,6 @@ import { SourceSearchConfigService } from './config/source-search.config';
 import { HtmlSearchStrategy } from './strategies/html-search.strategy';
 import { JsonLdStrategy } from './strategies/json-ld.strategy';
 import { ApiDiscoveryStrategy } from './strategies/api-discovery.strategy';
-import { SourceProfileDiscoveryService } from './discovery/source-profile-discovery.service';
-import { SourceProfileRepository } from './source-profile.repository';
 import { PlaywrightSearchStrategy } from './strategies/playwright-search.strategy';
 import { PlaywrightProductExtractor } from './extractors/playwright-product.extractor';
 import { SearchDiscoveryPipeline } from './pipelines/search-discovery.pipeline';
@@ -62,8 +60,6 @@ import { ProductValidationPipeline } from './pipelines/product-validation.pipeli
     JsonLdStrategy,
     ApiDiscoveryStrategy,
     PlaywrightSearchStrategy,
-    SourceProfileDiscoveryService,
-    SourceProfileRepository,
     SearchDiscoveryPipeline,
     ProductUrlExtractionPipeline,
     ProductDetailsExtractionPipeline,

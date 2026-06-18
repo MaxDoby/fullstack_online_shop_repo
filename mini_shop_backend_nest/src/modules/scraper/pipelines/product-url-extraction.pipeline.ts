@@ -10,9 +10,7 @@ export interface ProductUrlExtractionParams {
   searchUrl: string;
   baseUrl: string;
   query: string;
-  productLinkSelector?: string;
   scannedUrls: Set<string>;
-  maxLinksPerPage: number;
   usePlaywrightFallback: boolean;
 }
 
@@ -45,7 +43,6 @@ export class ProductUrlExtractionPipeline {
         html: searchHtml,
         baseUrl: params.baseUrl,
         query: params.query,
-        productLinkSelector: params.productLinkSelector,
       });
     } catch (error) {
       const errorMessage =
@@ -80,9 +77,7 @@ export class ProductUrlExtractionPipeline {
     }
 
     return {
-      productUrls: productUrls
-        .filter((url) => !params.scannedUrls.has(url))
-        .slice(0, params.maxLinksPerPage),
+      productUrls: productUrls.filter((url) => !params.scannedUrls.has(url)),
       usedPlaywrightFallback,
     };
   }
@@ -91,7 +86,6 @@ export class ProductUrlExtractionPipeline {
     html: string;
     baseUrl: string;
     query: string;
-    productLinkSelector?: string;
   }): string[] {
     const strategies: ProductUrlExtractionStrategy[] = [
       this.htmlSearchStrategy,
@@ -106,7 +100,6 @@ export class ProductUrlExtractionPipeline {
             html: params.html,
             baseUrl: params.baseUrl,
             query: params.query,
-            productLinkSelector: params.productLinkSelector,
           }),
         ),
       ),

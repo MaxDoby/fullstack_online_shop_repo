@@ -2,7 +2,6 @@ import { Injectable, Logger } from '@nestjs/common';
 import type { StartScrapeJobDto } from '../dto/start-scrape-job.dto';
 import type { RawScrapedProduct } from '../interfaces/raw-scraped-product.interface';
 import { chunkArray } from '../utils/scraper-common.utils';
-import type { DiscoveredSourceProfile } from '../interfaces/source-profile.interface';
 import { SearchDiscoveryPipeline } from '../pipelines/search-discovery.pipeline';
 import { ProductUrlExtractionPipeline } from '../pipelines/product-url-extraction.pipeline';
 import { ProductDetailsExtractionPipeline } from '../pipelines/product-details-extraction.pipeline';
@@ -10,12 +9,7 @@ import { ProductValidationPipeline } from '../pipelines/product-validation.pipel
 
 const defaultLimit = 20;
 const maxSearchPages = 3;
-const maxLinksPerPage = 20;
 const productPageConcurrency = 5;
-
-type ScrapeProductsParams = StartScrapeJobDto & {
-  sourceProfile?: DiscoveredSourceProfile | null;
-};
 
 @Injectable()
 export class UniversalScraperEngine {
@@ -29,7 +23,7 @@ export class UniversalScraperEngine {
   ) {}
 
   public async *scrapeProducts(
-    params: ScrapeProductsParams,
+    params: StartScrapeJobDto,
   ): AsyncGenerator<RawScrapedProduct> {
     const limit = params.limit ?? defaultLimit;
     const searchResults = await this.searchDiscoveryPipeline.discover(params);
@@ -37,7 +31,7 @@ export class UniversalScraperEngine {
     let matchedProductsCount = 0;
     const maxCandidateUrlsToVisit = Math.max(limit * 20, 60);
 
-    for (const { query, searchUrls, productLinkSelector } of searchResults) {
+    for (const { query, searchUrls } of searchResults) {
       let queryCandidateUrlsVisited = 0;
       let playwrightFallbackUsed = false;
 
@@ -49,9 +43,7 @@ export class UniversalScraperEngine {
               searchUrl,
               baseUrl: params.sourceBaseUrl,
               query,
-              productLinkSelector,
               scannedUrls,
-              maxLinksPerPage,
               usePlaywrightFallback: !playwrightFallbackUsed,
             });
           const productUrls = extractionResult.productUrls;

@@ -16,7 +16,6 @@ export class HtmlSearchStrategy implements ProductUrlExtractionStrategy {
       params.html,
       params.baseUrl,
       params.query,
-      params.productLinkSelector,
     );
   }
 }
