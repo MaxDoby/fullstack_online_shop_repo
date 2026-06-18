@@ -5,6 +5,7 @@ import { PrismaService } from '../../../core/prisma/prisma.service';
 import { StorageService } from '../../../core/storage/storage.service';
 import { ScraperHttpClient } from '../http/scraper-http.client';
 import type { NormalizedProductImage } from '../interfaces/normalized-product.interface';
+import { chunkArray } from '../utils/scraper-common.utils';
 
 const imageImportConcurrency = 3;
 
@@ -30,7 +31,7 @@ export class ProductImageScrapeImporter {
       isPrimary: index === 0,
     }));
 
-    for (const imageBatch of this.chunkImages(imageEntries)) {
+    for (const imageBatch of chunkArray(imageEntries, imageImportConcurrency)) {
       const results = await Promise.all(
         imageBatch.map(async ({ image, isPrimary }) => {
           try {
@@ -102,22 +103,5 @@ export class ProductImageScrapeImporter {
         isPrimary,
       },
     });
-  }
-
-  private chunkImages(
-    images: { image: NormalizedProductImage; isPrimary: boolean }[],
-  ): { image: NormalizedProductImage; isPrimary: boolean }[][] {
-    const chunks: { image: NormalizedProductImage; isPrimary: boolean }[][] =
-      [];
-
-    for (
-      let index = 0;
-      index < images.length;
-      index += imageImportConcurrency
-    ) {
-      chunks.push(images.slice(index, index + imageImportConcurrency));
-    }
-
-    return chunks;
   }
 }

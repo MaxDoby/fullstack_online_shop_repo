@@ -2,39 +2,69 @@ import { Injectable } from '@nestjs/common';
 import * as cheerio from 'cheerio';
 import type { AnyNode } from 'domhandler';
 import { ScraperHttpClient } from '../http/scraper-http.client';
-
-export interface SearchDiscoveryResult {
-  searchUrl: string;
-  method: 'GET';
-}
+import { SourceSearchConfigService } from '../config/source-search.config';
+import { PlaywrightSearchStrategy } from '../strategies/playwright-search.strategy';
 
 @Injectable()
 export class SearchDiscoveryService {
-  public constructor(private readonly scraperHttpClient: ScraperHttpClient) {}
+  public constructor(
+    private readonly scraperHttpClient: ScraperHttpClient,
+    private readonly sourceSearchConfigService: SourceSearchConfigService,
+    private readonly playwrightSearchStrategy: PlaywrightSearchStrategy,
+  ) {}
 
-  public async discoverSearchUrl(
+  public async discoverSearchUrls(
     sourceBaseUrl: string,
     query: string,
-  ): Promise<SearchDiscoveryResult> {
+  ): Promise<string[]> {
     const baseUrl = this.normalizeBaseUrl(sourceBaseUrl);
-    const homepageHtml = await this.scraperHttpClient.getText(baseUrl);
-    const $ = cheerio.load(homepageHtml);
+    const browserDiscoveredUrl = await this.discoverBrowserSearchUrl(
+      baseUrl,
+      query,
+    );
+    const configuredUrls =
+      this.sourceSearchConfigService.buildSearchUrlCandidates(baseUrl, query);
 
-    const formResult = this.findSearchForm($, baseUrl, query);
+    try {
+      const homepageHtml = await this.scraperHttpClient.getText(baseUrl);
+      const $ = cheerio.load(homepageHtml);
+      const formSearchUrl = this.findSearchFormUrl($, baseUrl, query);
+      const urls = [
+        browserDiscoveredUrl,
+        formSearchUrl,
+        ...configuredUrls,
+      ].filter((url): url is string => Boolean(url));
 
-    if (formResult) return formResult;
-
-    return {
-      searchUrl: this.buildFallbackSearchUrl(baseUrl, query),
-      method: 'GET',
-    };
+      return [...new Set(urls)];
+    } catch {
+      return [
+        ...new Set(
+          [browserDiscoveredUrl, ...configuredUrls].filter(
+            (url): url is string => Boolean(url),
+          ),
+        ),
+      ];
+    }
   }
 
-  private findSearchForm(
+  public async discoverPrimarySearchUrl(
+    sourceBaseUrl: string,
+    query: string,
+  ): Promise<string> {
+    const [searchUrl] = await this.discoverSearchUrls(sourceBaseUrl, query);
+
+    if (!searchUrl) {
+      throw new Error('Could not discover search URL for source.');
+    }
+
+    return searchUrl;
+  }
+
+  private findSearchFormUrl(
     $: cheerio.CheerioAPI,
     baseUrl: string,
     query: string,
-  ): SearchDiscoveryResult | null {
+  ): string | null {
     const forms = $('form').toArray();
 
     for (const form of forms) {
@@ -55,10 +85,7 @@ export class SearchDiscoveryService {
 
       searchUrl.searchParams.set(inputName, query);
 
-      return {
-        searchUrl: searchUrl.href,
-        method: 'GET',
-      };
+      return searchUrl.href;
     }
 
     return null;
@@ -75,25 +102,28 @@ export class SearchDiscoveryService {
     return (
       type === 'search' ||
       name.includes('search') ||
+      name.includes('query') ||
+      name.includes('keyword') ||
       name === 'q' ||
       placeholder.includes('search') ||
-      placeholder.includes('caut') ||
-      ariaLabel.includes('search') ||
-      ariaLabel.includes('caut')
+      placeholder.includes('find') ||
+      ariaLabel.includes('search')
     );
-  }
-
-  private buildFallbackSearchUrl(baseUrl: string, query: string): string {
-    const searchUrl = new URL('/search', baseUrl);
-
-    searchUrl.searchParams.set('search', query);
-
-    return searchUrl.href;
   }
 
   private normalizeBaseUrl(sourceBaseUrl: string): string {
     return sourceBaseUrl.endsWith('/')
       ? sourceBaseUrl.slice(0, -1)
       : sourceBaseUrl;
+  }
+
+  private discoverBrowserSearchUrl(
+    baseUrl: string,
+    query: string,
+  ): Promise<string | null> {
+    return this.playwrightSearchStrategy.discoverSearchResultUrl({
+      baseUrl,
+      query,
+    });
   }
 }

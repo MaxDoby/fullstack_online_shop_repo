@@ -1,35 +1,40 @@
-import {
-	useState, type SubmitEvent, type ChangeEvent,
-} from 'react';
-import useScraperJobs, { type StartScraperJobPayload } from '../hooks/useScraperJobs';
+import { useState, type SubmitEvent, type ChangeEvent } from 'react';
+import useScraperJobs, {
+	type StartScraperJobPayload,
+} from '../hooks/useScraperJobs';
 import useAdminCategories from '../hooks/useAdminCategories';
 
 interface AdminScraperPanelProps {
-    accessToken: string | null;
-    onProductsChanged: () => void;
+  accessToken: string | null;
+  onProductsChanged: () => void;
 }
 
-const AdminScraperPanel = ({ accessToken, onProductsChanged }: AdminScraperPanelProps) => {
+const AdminScraperPanel = ({
+	accessToken,
+	onProductsChanged,
+}: AdminScraperPanelProps) => {
 	const {
-		scraperJobs, scraperJobsError, isScraperJobLoading, loadScraperJobs, startScraperJob, deleteScraperJob,
+		scraperJobs,
+		scraperJobsError,
+		isScraperJobLoading,
+		loadScraperJobs,
+		startScraperJob,
+		deleteScraperJob,
 	} = useScraperJobs(accessToken);
 
 	const { categories, categoriesError } = useAdminCategories();
 
 	const [formData, setFormData] = useState({
-		sourceWebsite: 'ultra.md',
-		sourceBaseUrl: 'https://ultra.md',
+		sourceWebsite: '',
+		sourceBaseUrl: '',
 		targetCategoryId: '',
-		productType: '',
-		manufacturer: '',
-		model: '',
 		searchText: '',
-		minPrice: '',
-		maxPrice: '',
 		limit: '1',
 	});
 
-	const handleInputChange = (event: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+	const handleInputChange = (
+		event: ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+	) => {
 		const { name, value } = event.target;
 
 		setFormData((currentData) => ({
@@ -38,19 +43,16 @@ const AdminScraperPanel = ({ accessToken, onProductsChanged }: AdminScraperPanel
 		}));
 	};
 
-	const handleSubmitScraperJob = async (event: SubmitEvent<HTMLFormElement>) => {
+	const handleSubmitScraperJob = async (
+		event: SubmitEvent<HTMLFormElement>,
+	) => {
 		event.preventDefault();
 
 		const payload: StartScraperJobPayload = {
 			sourceWebsite: formData.sourceWebsite,
 			sourceBaseUrl: formData.sourceBaseUrl,
 			targetCategoryId: Number(formData.targetCategoryId),
-			productType: formData.productType || undefined,
-			manufacturer: formData.manufacturer || undefined,
-			model: formData.model || undefined,
-			searchText: formData.searchText || undefined,
-			minPrice: formData.minPrice ? Number(formData.minPrice) : undefined,
-			maxPrice: formData.maxPrice ? Number(formData.maxPrice) : undefined,
+			searchText: formData.searchText.trim(),
 			limit: formData.limit ? Number(formData.limit) : undefined,
 		};
 
@@ -63,11 +65,20 @@ const AdminScraperPanel = ({ accessToken, onProductsChanged }: AdminScraperPanel
 				<h2>Scraper Jobs</h2>
 
 				<div className="admin-section-actions">
-					<button type="button" className="btn-filter" onClick={loadScraperJobs}>
+					<button
+						type="button"
+						className="btn-filter"
+						onClick={loadScraperJobs}
+          >
 						Refresh Jobs
 					</button>
 
-					<button type="submit" form="admin-scraper-form" className="btn-filter admin-create-button" disabled={isScraperJobLoading}>
+					<button
+						type="submit"
+						form="admin-scraper-form"
+						className="btn-filter admin-create-button"
+						disabled={isScraperJobLoading}
+          >
 						Start Scraper Job
 					</button>
 				</div>
@@ -76,10 +87,20 @@ const AdminScraperPanel = ({ accessToken, onProductsChanged }: AdminScraperPanel
 			{scraperJobsError && <p>{scraperJobsError}</p>}
 			{categoriesError && <p>{categoriesError}</p>}
 
-			<form id="admin-scraper-form" className="admin-scraper-form" onSubmit={handleSubmitScraperJob}>
+			<form
+				id="admin-scraper-form"
+				className="admin-scraper-form"
+				onSubmit={handleSubmitScraperJob}
+      >
 				<div className="admin-scraper-field">
 					<p className="admin-scraper-help-text">*de unde importam</p>
-					<input name="sourceWebsite" value={formData.sourceWebsite} onChange={handleInputChange} placeholder="Sursa: ex: ultra.md" />
+					<input
+						name="sourceWebsite"
+						value={formData.sourceWebsite}
+						onChange={handleInputChange}
+						placeholder="Sursa: ex: example-shop.com"
+						required
+          />
 				</div>
 
 				<div className="admin-scraper-field">
@@ -88,58 +109,54 @@ const AdminScraperPanel = ({ accessToken, onProductsChanged }: AdminScraperPanel
 						name="sourceBaseUrl"
 						value={formData.sourceBaseUrl}
 						onChange={handleInputChange}
-						placeholder="URL sursa: ex: https://ultra.md"
-                    />
+						placeholder="URL sursa: ex: https://example-shop.com"
+						required
+          />
 				</div>
 
 				<div className="admin-scraper-field">
 					<p className="admin-scraper-help-text">*unde vom importa</p>
-					<select name="targetCategoryId" value={formData.targetCategoryId} onChange={handleInputChange} required>
+					<select
+						name="targetCategoryId"
+						value={formData.targetCategoryId}
+						onChange={handleInputChange}
+						required
+          >
 						<option value="">Alege categoria interna</option>
 						{categories.map((category) => (
 							<option key={category.id} value={category.id}>
 								{category.name}
 							</option>
-                        ))}
+            ))}
 					</select>
 				</div>
 
-				<div className="admin-scraper-field">
-					<p className="admin-scraper-help-text">*ce vom importa</p>
-					<input
-						name="productType"
-						value={formData.productType}
-						onChange={handleInputChange}
-						placeholder="Tip produs: ex: tablet, casti, laptop"
-                    />
-				</div>
-
-				<div className="admin-scraper-field">
-					<input name="manufacturer" value={formData.manufacturer} onChange={handleInputChange} placeholder="Producator: ex: Apple" />
-				</div>
-
-				<div className="admin-scraper-field">
-					<input name="model" value={formData.model} onChange={handleInputChange} placeholder="Model: ex: iPhone 15" />
-				</div>
-
 				<div className="admin-scraper-field admin-scraper-field-wide">
+					<p className="admin-scraper-help-text">*ce cautam pe sursa</p>
 					<input
 						name="searchText"
 						value={formData.searchText}
 						onChange={handleInputChange}
-						placeholder="Descriere: ex: smartphone iPhone 15 Pro Max"
-                    />
+						placeholder="Search query: ex: telefon samsung s21"
+						required
+          />
 
 					<p className="admin-scraper-help-text">
-						*foloseste acest camp pentru cautari generale cand modelul nu este cunoscut: casti, boxa portabila, laptop gaming.
+						*verifica manual intai pe sursa ca acest query returneaza produsele
+						dorite.
 					</p>
 				</div>
 
-				<input name="minPrice" type="number" value={formData.minPrice} onChange={handleInputChange} placeholder="Pret minim: ex: 1" />
-
-				<input name="maxPrice" type="number" value={formData.maxPrice} onChange={handleInputChange} placeholder="Pret maxim: ex: 88888" />
-
-				<input name="limit" type="number" value={formData.limit} onChange={handleInputChange} placeholder="Limita produse: ex: 10" />
+				<div className="admin-scraper-field">
+					<p className="admin-scraper-help-text">*cate produse importam</p>
+					<input
+						name="limit"
+						type="number"
+						value={formData.limit}
+						onChange={handleInputChange}
+						placeholder="Limita produse: ex: 10"
+          />
+				</div>
 			</form>
 
 			<div className="admin-scraper-table-wrap">
@@ -149,7 +166,6 @@ const AdminScraperPanel = ({ accessToken, onProductsChanged }: AdminScraperPanel
 							<th>ID</th>
 							<th>Source</th>
 							<th>Category</th>
-							<th>Type</th>
 							<th>Status</th>
 							<th>Found</th>
 							<th>Imported</th>
@@ -168,34 +184,44 @@ const AdminScraperPanel = ({ accessToken, onProductsChanged }: AdminScraperPanel
 								<td>{job.id}</td>
 								<td>{job.sourceWebsite}</td>
 								<td>{job.targetCategory?.name ?? '-'}</td>
-								<td>{job.productType ?? '-'}</td>
 								<td>{job.status}</td>
 								<td>{job.totalFound}</td>
 								<td>{job.totalImported}</td>
 								<td>{job.totalUpdated}</td>
 								<td>{job.totalFailed}</td>
 								<td>{new Date(job.createdAt).toLocaleString()}</td>
-								<td>{job.finishedAt ? new Date(job.finishedAt).toLocaleString() : '-'}</td>
-								<td className="admin-scraper-error-cell" title={job.errorMessage ?? undefined}>
+								<td>
+									{job.finishedAt
+                    ? new Date(job.finishedAt).toLocaleString()
+                    : '-'}
+								</td>
+								<td
+									className="admin-scraper-error-cell"
+									title={job.errorMessage ?? undefined}
+                >
 									{job.errorMessage ?? '-'}
 								</td>
 								<td className="admin-scraper-actions-cell">
 									{job.status === 'COMPLETED' && (
-									<button type="button" className="btn-filter admin-scraper-action-button" onClick={onProductsChanged}>
+									<button
+										type="button"
+										className="btn-filter admin-scraper-action-button"
+										onClick={onProductsChanged}
+                    >
 										Reload Products
 									</button>
-                                    )}
+                  )}
 
 									<button
 										type="button"
 										className="btn-filter admin-scraper-action-button admin-scraper-delete-button"
 										onClick={() => deleteScraperJob(job.id)}
-                                    >
+                  >
 										Delete
 									</button>
 								</td>
 							</tr>
-                        ))}
+            ))}
 					</tbody>
 				</table>
 			</div>

@@ -17,10 +17,10 @@ export class ScraperRepository extends BaseRepository<
       data: {
         sourceWebsite: body.sourceWebsite,
         sourceBaseUrl: body.sourceBaseUrl,
-        manufacturer: body.manufacturer,
-        productType: body.productType,
+        manufacturer: null,
+        productType: null,
         targetCategoryId: body.targetCategoryId,
-        model: body.model,
+        model: null,
         searchText: body.searchText,
         minPrice: body.minPrice,
         maxPrice: body.maxPrice,

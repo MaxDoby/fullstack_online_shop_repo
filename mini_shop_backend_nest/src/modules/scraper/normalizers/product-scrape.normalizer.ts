@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import type { RawScrapedProduct } from '../interfaces/raw-scraped-product.interface';
 import type { NormalizedProduct } from '../interfaces/normalized-product.interface';
+import { parsePriceText } from '../utils/scraper-common.utils';
 
 @Injectable()
 export class ProductScrapeNormalizer {
@@ -11,7 +12,8 @@ export class ProductScrapeNormalizer {
     return {
       title: rawProduct.title.trim(),
       description: rawProduct.description?.trim() ?? rawProduct.title.trim(),
-      price: rawProduct.price ?? this.parsePrice(rawProduct.priceText),
+      price:
+        rawProduct.price ?? parsePriceText(rawProduct.priceText ?? '') ?? 0,
       stock: 0,
       thumbnail,
       manufacturerName: rawProduct.manufacturerName,
@@ -28,13 +30,5 @@ export class ProductScrapeNormalizer {
       variants: rawProduct.variants ?? [],
       specificationGroups: rawProduct.specificationGroups ?? [],
     };
-  }
-
-  private parsePrice(priceText?: string): number {
-    if (!priceText) return 0;
-
-    const normalizedPrice = priceText.replace(/[^\d.,]/g, '').replace(',', '.');
-
-    return Number(normalizedPrice) || 0;
   }
 }

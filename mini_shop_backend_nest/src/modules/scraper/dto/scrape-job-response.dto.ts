@@ -25,13 +25,13 @@ export class ScrapeJobResponseDto {
 
   @ApiProperty({
     description: 'Source website name.',
-    example: 'ultra.md',
+    example: 'example-shop.com',
   })
   public readonly sourceWebsite!: string;
 
   @ApiProperty({
     description: 'Source website base URL.',
-    example: 'https://ultra.md',
+    example: 'https://example-shop.com',
   })
   public readonly sourceBaseUrl!: string;
 

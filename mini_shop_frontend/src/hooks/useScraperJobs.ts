@@ -1,38 +1,31 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 export interface ScraperJob {
+  id: number;
+  sourceWebsite: string;
+  sourceBaseUrl: string;
+  targetCategory: {
     id: number;
-    sourceWebsite: string;
-    sourceBaseUrl: string;
-    targetCategory: {
-        id: number;
-        name: string;
-    } | null;
-    manufacturer: string | null;
-    productType: string | null;
-    searchText: string | null;
-    minPrice: number | null;
-    maxPrice: number | null;
-    status: 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED' | 'CANCELED';
-    totalFound: number;
-    totalImported: number;
-    totalUpdated: number;
-    totalFailed: number;
-    errorMessage: string | null;
-    createdAt: string;
-    finishedAt: string | null;
+    name: string;
+  } | null;
+  searchText: string | null;
+  minPrice: number | null;
+  maxPrice: number | null;
+  status: 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED' | 'CANCELED';
+  totalFound: number;
+  totalImported: number;
+  totalUpdated: number;
+  totalFailed: number;
+  errorMessage: string | null;
+  createdAt: string;
+  finishedAt: string | null;
 }
 
 export interface StartScraperJobPayload {
     sourceWebsite: string;
     sourceBaseUrl: string;
     targetCategoryId: number;
-    productType?: string;
-    manufacturer?: string;
-    model?: string;
-    searchText?: string;
-    minPrice?: number;
-    maxPrice?: number;
+    searchText: string;
     limit?: number;
 }
 
@@ -43,7 +36,7 @@ const useScraperJobs = (accessToken: string | null) => {
 	const [scraperJobsError, setScraperJobsError] = useState<string | null>(null);
 	const [isScraperJobLoading, setIsScraperJobLoading] = useState<boolean>(false);
 
-	const loadScraperJobs = async () => {
+	const loadScraperJobs = useCallback(async () => {
 		if (!accessToken) return;
 
 		const response = await fetch(`${apiBaseUrl}/scraper/jobs`, {
@@ -56,7 +49,7 @@ const useScraperJobs = (accessToken: string | null) => {
 
 		const jobs: ScraperJob[] = await response.json();
 		setScraperJobs(jobs);
-	};
+	}, [accessToken]);
 
 	const startScraperJob = async (payload: StartScraperJobPayload) => {
 		if (!accessToken) throw new Error('Admin authentication is required.');
@@ -78,7 +71,9 @@ const useScraperJobs = (accessToken: string | null) => {
 
 			await loadScraperJobs();
 		} catch (error) {
-			setScraperJobsError(error instanceof Error ? error.message : 'Unknown scraper error.');
+			setScraperJobsError(
+				error instanceof Error ? error.message : 'Unknown scraper error.',
+			);
 		} finally {
 			setIsScraperJobLoading(false);
 		}
@@ -103,9 +98,11 @@ const useScraperJobs = (accessToken: string | null) => {
 		if (!accessToken) return;
 
 		loadScraperJobs().catch((error: unknown) => {
-			setScraperJobsError(error instanceof Error ? error.message : 'Scraper jobs load failed.');
+			setScraperJobsError(
+				error instanceof Error ? error.message : 'Scraper jobs load failed.',
+			);
 		});
-	}, [accessToken]);
+	}, [accessToken, loadScraperJobs]);
 
 	return {
 		scraperJobs,

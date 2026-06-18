@@ -20,6 +20,18 @@ import { SearchDiscoveryService } from './discovery/search-discovery.service';
 import { ProductLinkExtractor } from './extractors/product-link.extractor';
 import { GenericProductExtractor } from './extractors/generic-product.extractor';
 import { UniversalScraperEngine } from './engine/scraper-engine';
+import { SourceSearchConfigService } from './config/source-search.config';
+import { HtmlSearchStrategy } from './strategies/html-search.strategy';
+import { JsonLdStrategy } from './strategies/json-ld.strategy';
+import { ApiDiscoveryStrategy } from './strategies/api-discovery.strategy';
+import { SourceProfileDiscoveryService } from './discovery/source-profile-discovery.service';
+import { SourceProfileRepository } from './source-profile.repository';
+import { PlaywrightSearchStrategy } from './strategies/playwright-search.strategy';
+import { PlaywrightProductExtractor } from './extractors/playwright-product.extractor';
+import { SearchDiscoveryPipeline } from './pipelines/search-discovery.pipeline';
+import { ProductUrlExtractionPipeline } from './pipelines/product-url-extraction.pipeline';
+import { ProductDetailsExtractionPipeline } from './pipelines/product-details-extraction.pipeline';
+import { ProductValidationPipeline } from './pipelines/product-validation.pipeline';
 
 @Module({
   imports: [
@@ -43,7 +55,19 @@ import { UniversalScraperEngine } from './engine/scraper-engine';
     SearchDiscoveryService,
     ProductLinkExtractor,
     GenericProductExtractor,
+    PlaywrightProductExtractor,
     UniversalScraperEngine,
+    SourceSearchConfigService,
+    HtmlSearchStrategy,
+    JsonLdStrategy,
+    ApiDiscoveryStrategy,
+    PlaywrightSearchStrategy,
+    SourceProfileDiscoveryService,
+    SourceProfileRepository,
+    SearchDiscoveryPipeline,
+    ProductUrlExtractionPipeline,
+    ProductDetailsExtractionPipeline,
+    ProductValidationPipeline,
   ],
 })
 export class ScraperModule {}

@@ -6,6 +6,15 @@ import { ScrapeJobMapper } from './mappers/scrape-job.mapper';
 import { ScraperRepository } from './scraper.repository';
 import { ScraperQueueProducer } from './queue/scraper-queue.producer';
 import { UniversalScraperEngine } from './engine/scraper-engine';
+import { SourceProfileDiscoveryService } from './discovery/source-profile-discovery.service';
+import type { SourceProfilePreviewRequestDto } from './dto/source-profile-preview.dto';
+import type {
+  SaveSourceProfileDto,
+  SourceProfileResponseDto,
+} from './dto/source-profile.dto';
+import { SourceProfileRepository } from './source-profile.repository';
+import type { DiscoveredSourceProfile } from './interfaces/source-profile.interface';
+import { SearchDiscoveryService } from './discovery/search-discovery.service';
 
 @Injectable()
 export class ScraperService {
@@ -15,6 +24,9 @@ export class ScraperService {
     private readonly productScrapeImporter: ProductScrapeImporter,
     private readonly scraperQueueProducer: ScraperQueueProducer,
     private readonly universalScraperEngine: UniversalScraperEngine,
+    private readonly sourceProfileDiscoveryService: SourceProfileDiscoveryService,
+    private readonly sourceProfileRepository: SourceProfileRepository,
+    private readonly searchDiscoveryService: SearchDiscoveryService,
   ) {}
 
   private readonly logger = new Logger(ScraperService.name);
@@ -46,9 +58,10 @@ export class ScraperService {
       let totalImported: number = 0;
       let totalUpdated: number = 0;
       let totalFailed: number = 0;
+      const sourceProfile = await this.findSourceProfileForJob(body);
 
       for await (const rawProduct of this.universalScraperEngine.scrapeProducts(
-        body,
+        { ...body, sourceProfile },
       )) {
         totalFound += 1;
 
@@ -133,5 +146,127 @@ export class ScraperService {
     const job = await this.scraperRepository.deleteWithTargetCategory(id);
 
     return ScrapeJobMapper.toResponse(job);
+  }
+
+  public async previewSourceProfile(body: SourceProfilePreviewRequestDto) {
+    const sourceProfile =
+      await this.sourceProfileDiscoveryService.discoverFromExample(body);
+
+    return {
+      searchUrlTemplate: sourceProfile.searchUrlTemplate,
+      confidenceScore: sourceProfile.confidenceScore,
+      productLinkSelector: sourceProfile.productLinkSelector,
+      productUrlCandidates: sourceProfile.productUrlCandidates,
+    };
+  }
+
+  public async saveSourceProfile(body: SaveSourceProfileDto) {
+    const exampleSearchUrl =
+      body.exampleSearchUrl ??
+      (await this.searchDiscoveryService.discoverPrimarySearchUrl(
+        body.sourceBaseUrl,
+        body.exampleSearchTerm,
+      ));
+    const discoveredProfile =
+      await this.sourceProfileDiscoveryService.discoverFromExample({
+        sourceBaseUrl: body.sourceBaseUrl,
+        exampleSearchUrl,
+        exampleSearchTerm: body.exampleSearchTerm,
+      });
+
+    const sourceProfile =
+      await this.sourceProfileRepository.upsertFromDiscoveredProfile({
+        body,
+        discoveredProfile,
+      });
+
+    return this.toSourceProfileResponse(sourceProfile);
+  }
+
+  public async findAllSourceProfiles() {
+    const sourceProfiles = await this.sourceProfileRepository.findManyActive();
+
+    return sourceProfiles.map((sourceProfile) =>
+      this.toSourceProfileResponse(sourceProfile),
+    );
+  }
+
+  private async findSourceProfileForJob(
+    body: StartScrapeJobDto,
+  ): Promise<DiscoveredSourceProfile | null> {
+    if (body.exampleSearchUrl && body.exampleSearchTerm) {
+      try {
+        return await this.sourceProfileDiscoveryService.discoverFromExample({
+          sourceBaseUrl: body.sourceBaseUrl,
+          exampleSearchUrl: body.exampleSearchUrl,
+          exampleSearchTerm: body.exampleSearchTerm,
+        });
+      } catch (error) {
+        this.logger.warn(
+          `Source profile discovery failed. Running scraper without discovered profile. ${
+            error instanceof Error ? error.message : String(error)
+          }`,
+        );
+      }
+    }
+
+    const sourceProfile = await this.sourceProfileRepository.findActiveBySource(
+      {
+        sourceWebsite: body.sourceWebsite,
+        sourceBaseUrl: body.sourceBaseUrl,
+      },
+    );
+
+    if (!sourceProfile) return null;
+
+    return {
+      sourceBaseUrl: sourceProfile.sourceBaseUrl,
+      exampleSearchUrl: sourceProfile.exampleSearchUrl,
+      exampleSearchTerm: sourceProfile.exampleSearchTerm,
+      searchUrlTemplate: sourceProfile.searchUrlTemplate,
+      productLinkSelector: sourceProfile.productLinkSelector ?? undefined,
+      productUrlCandidates: this.toStringArray(
+        sourceProfile.productUrlCandidates,
+      ),
+      confidenceScore: sourceProfile.confidenceScore,
+    };
+  }
+
+  private toSourceProfileResponse(sourceProfile: {
+    id: number;
+    sourceWebsite: string;
+    sourceBaseUrl: string;
+    exampleSearchUrl: string;
+    exampleSearchTerm: string;
+    searchUrlTemplate: string;
+    productLinkSelector: string | null;
+    productUrlCandidates: unknown;
+    confidenceScore: number;
+    isActive: boolean;
+    createdAt: Date;
+    updatedAt: Date;
+  }): SourceProfileResponseDto {
+    return {
+      id: sourceProfile.id,
+      sourceWebsite: sourceProfile.sourceWebsite,
+      sourceBaseUrl: sourceProfile.sourceBaseUrl,
+      exampleSearchUrl: sourceProfile.exampleSearchUrl,
+      exampleSearchTerm: sourceProfile.exampleSearchTerm,
+      searchUrlTemplate: sourceProfile.searchUrlTemplate,
+      productLinkSelector: sourceProfile.productLinkSelector ?? undefined,
+      productUrlCandidates: this.toStringArray(
+        sourceProfile.productUrlCandidates,
+      ),
+      confidenceScore: sourceProfile.confidenceScore,
+      isActive: sourceProfile.isActive,
+      createdAt: sourceProfile.createdAt,
+      updatedAt: sourceProfile.updatedAt,
+    };
+  }
+
+  private toStringArray(value: unknown): string[] {
+    if (!Array.isArray(value)) return [];
+
+    return value.filter((item): item is string => typeof item === 'string');
   }
 }

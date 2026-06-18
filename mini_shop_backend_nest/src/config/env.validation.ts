@@ -13,4 +13,5 @@ export const envValidationSchema = Joi.object({
   RABBITMQ_URL: Joi.string().required(),
   RABBITMQ_SCRAPER_QUEUE: Joi.string().required(),
   GNEWS_API_KEY: Joi.string().optional(),
+  SCRAPER_INSECURE_IMAGE_HOSTS: Joi.string().allow('').optional(),
 });

@@ -2,10 +2,11 @@ import { Injectable } from '@nestjs/common';
 import * as cheerio from 'cheerio';
 import type { CheerioAPI } from 'cheerio';
 import type { RawScrapedProduct } from '../interfaces/raw-scraped-product.interface';
+import { parsePriceText } from '../utils/scraper-common.utils';
 
 type JsonLdRecord = Record<string, unknown>;
 
-const minimumProductScore = 60;
+const minimumProductScore = 25;
 
 const isRecord = (value: unknown): value is JsonLdRecord => {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -32,9 +33,8 @@ export class GenericProductExtractor {
     if (
       score < minimumProductScore ||
       !title ||
-      typeof price !== 'number' ||
-      price <= 0 ||
-      imageUrls.length === 0
+      imageUrls.length === 0 ||
+      typeof price !== 'number'
     ) {
       return null;
     }
@@ -44,7 +44,7 @@ export class GenericProductExtractor {
       sourceUrl,
       sourceWebsite: new URL(sourceUrl).hostname,
       price,
-      priceText: price ? `${price}` : undefined,
+      priceText: `${price}`,
       manufacturerName: this.extractBrand(productJsonLd),
       categoryPath: this.extractCategoryPath(breadcrumbJsonLd),
       description: this.extractDescription($, productJsonLd) ?? title,
@@ -103,7 +103,7 @@ export class GenericProductExtractor {
 
     const priceText = $('[class*="price"], [id*="price"]').first().text();
 
-    return this.parsePrice(priceText);
+    return parsePriceText(priceText);
   }
 
   private extractJsonLdPrice(productJsonLd?: JsonLdRecord): number | undefined {
@@ -157,10 +157,7 @@ export class GenericProductExtractor {
     }
 
     if (isRecord(value)) {
-      return this.extractImageValue(
-        value.url ?? value.contentUrl,
-        sourceUrl,
-      );
+      return this.extractImageValue(value.url ?? value.contentUrl, sourceUrl);
     }
 
     return [];
@@ -263,22 +260,24 @@ export class GenericProductExtractor {
 
   private hasCartSignal($: CheerioAPI): boolean {
     const pageText = $('body').text().toLowerCase();
+    const commerceElements = [
+      'form[action*="cart"]',
+      'form[action*="basket"]',
+      'button[class*="cart"]',
+      'button[class*="basket"]',
+      'button[class*="buy"]',
+      'a[class*="cart"]',
+      'a[class*="basket"]',
+      '[data-cart]',
+      '[data-basket]',
+      '[data-add-to-cart]',
+    ].join(', ');
 
     return (
+      $(commerceElements).length > 0 ||
       pageText.includes('add to cart') ||
-      pageText.includes('buy now') ||
-      pageText.includes('adaugă în coș') ||
-      pageText.includes('adauga in cos') ||
-      pageText.includes('cumpără') ||
-      pageText.includes('cumpara')
+      pageText.includes('buy now')
     );
-  }
-
-  private parsePrice(priceText: string): number | undefined {
-    const normalizedPrice = priceText.replace(/[^\d.,]/g, '').replace(',', '.');
-    const price = Number(normalizedPrice);
-
-    return Number.isFinite(price) && price > 0 ? price : undefined;
   }
 
   private normalizeText(value: string): string | undefined {

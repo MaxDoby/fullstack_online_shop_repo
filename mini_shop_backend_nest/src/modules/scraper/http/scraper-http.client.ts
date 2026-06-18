@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import axios, { type AxiosInstance } from 'axios';
 import https from 'https';
 
@@ -11,16 +12,23 @@ interface ScraperBinaryResponse {
 const requestTimeoutMs = 15000;
 const requestDelayMs = 500;
 const retryAttempts = 2;
-const insecureImageHosts = new Set(['cdn.ultra.md']);
 
 @Injectable()
 export class ScraperHttpClient {
   private readonly client: AxiosInstance;
+  private readonly insecureImageHosts: Set<string>;
   private readonly insecureHttpsAgent = new https.Agent({
     rejectUnauthorized: false,
   });
 
-  public constructor() {
+  public constructor(configService: ConfigService) {
+    this.insecureImageHosts = new Set(
+      (configService.get<string>('SCRAPER_INSECURE_IMAGE_HOSTS') ?? '')
+        .split(',')
+        .map((host) => host.trim())
+        .filter(Boolean),
+    );
+
     this.client = axios.create({
       timeout: requestTimeoutMs,
       headers: {
@@ -34,6 +42,7 @@ export class ScraperHttpClient {
     return this.withRetry(async () => {
       const response = await this.client.get<string>(url, {
         responseType: 'text',
+        validateStatus: (status) => status < 500,
         headers: {
           Accept:
             'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
@@ -76,7 +85,7 @@ export class ScraperHttpClient {
   private getImageHttpsAgent(url: string): https.Agent | undefined {
     const hostName = new URL(url).hostname;
 
-    return insecureImageHosts.has(hostName)
+    return this.insecureImageHosts.has(hostName)
       ? this.insecureHttpsAgent
       : undefined;
   }

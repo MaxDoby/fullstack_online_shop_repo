@@ -22,6 +22,14 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth/jwt-auth.guard';
 import { AdminGuard } from '../auth/guards/admin/admin.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { ScrapeJobResponseDto } from './dto/scrape-job-response.dto';
+import {
+  SourceProfilePreviewRequestDto,
+  SourceProfilePreviewResponseDto,
+} from './dto/source-profile-preview.dto';
+import {
+  SaveSourceProfileDto,
+  SourceProfileResponseDto,
+} from './dto/source-profile.dto';
 
 @ApiBearerAuth()
 @ApiTags('Scraper')
@@ -48,6 +56,54 @@ export class ScraperController {
   @Post('jobs')
   public startJob(@Body() body: StartScrapeJobDto) {
     return this.scraperService.startJob(body);
+  }
+
+  @ApiOperation({
+    summary: 'Preview source profile from a real search URL.',
+    description:
+      'Detects a reusable search URL template and product URL candidates from a manually copied source search URL. This helps configure a new source without hardcoding search paths in code.',
+  })
+  @ApiBody({ type: SourceProfilePreviewRequestDto })
+  @ApiResponse({
+    status: 201,
+    description: 'Source profile preview generated successfully.',
+    type: SourceProfilePreviewResponseDto,
+  })
+  @ApiResponse({ status: 400, description: 'Invalid source profile payload.' })
+  @ApiResponse({ status: 401, description: 'Missing or invalid JWT token.' })
+  @ApiResponse({ status: 403, description: 'Admin role is required.' })
+  @Post('source-profile/preview')
+  public previewSourceProfile(@Body() body: SourceProfilePreviewRequestDto) {
+    return this.scraperService.previewSourceProfile(body);
+  }
+
+  @ApiOperation({
+    summary: 'Save or update a reusable scraper source profile.',
+    description: 'Creates a reusable source profile from a real search URL.',
+  })
+  @ApiBody({ type: SaveSourceProfileDto })
+  @ApiResponse({
+    status: 201,
+    description: 'Source profile saved successfully.',
+    type: SourceProfileResponseDto,
+  })
+  @Post('source-profiles')
+  public saveSourceProfile(@Body() body: SaveSourceProfileDto) {
+    return this.scraperService.saveSourceProfile(body);
+  }
+
+  @ApiOperation({
+    summary: 'Get saved scraper source profiles.',
+    description: 'Returns active source profiles available for scraper jobs.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Source profiles retrieved successfully.',
+    type: [SourceProfileResponseDto],
+  })
+  @Get('source-profiles')
+  public findAllSourceProfiles() {
+    return this.scraperService.findAllSourceProfiles();
   }
 
   @ApiOperation({

@@ -14,7 +14,7 @@ import {
 export class StartScrapeJobDto {
   @ApiProperty({
     description: 'Website domain used as scraper source identifier.',
-    example: 'ultra.md',
+    example: 'example-shop.com',
   })
   @IsString()
   @IsNotEmpty()
@@ -22,7 +22,7 @@ export class StartScrapeJobDto {
 
   @ApiProperty({
     description: 'Base URL of the source website.',
-    example: 'https://ultra.md',
+    example: 'https://example-shop.com',
   })
   @IsUrl()
   @IsNotEmpty()
@@ -39,36 +39,31 @@ export class StartScrapeJobDto {
   public readonly targetCategoryId!: number;
 
   @ApiPropertyOptional({
-    description: 'Optional manufacturer filter used by the scraper.',
-    example: 'Xiaomi',
+    description:
+      'Search query used by the scraper. The admin should first verify this query manually on the source website.',
+    example: 'telefon samsung s21',
   })
-  @IsOptional()
   @IsString()
-  public readonly manufacturer?: string;
+  @IsNotEmpty()
+  public readonly searchText!: string;
 
   @ApiPropertyOptional({
-    description: 'Product type search context used by the scraper.',
-    example: 'tablet',
+    description:
+      'Real search URL copied from the source website after a manual search. Used to auto-detect the search URL template.',
+    example: 'https://example-shop.com/search?query=iphone',
   })
   @IsOptional()
-  @IsString()
-  public readonly productType?: string;
+  @IsUrl()
+  public readonly exampleSearchUrl?: string;
 
   @ApiPropertyOptional({
-    description: 'Optional product model filter used by the scraper.',
-    example: 'iPhone 16 Pro Max',
+    description:
+      'The exact search term used when copying exampleSearchUrl. Example: if the copied URL was created after searching "iphone", pass "iphone".',
+    example: 'iphone',
   })
   @IsOptional()
   @IsString()
-  public readonly model?: string;
-
-  @ApiPropertyOptional({
-    description: 'Search text filter used by the scraper.',
-    example: 'Xiaomi 15 Ultra',
-  })
-  @IsOptional()
-  @IsString()
-  public readonly searchText?: string;
+  public readonly exampleSearchTerm?: string;
 
   @ApiPropertyOptional({
     description: 'Minimum product price filter.',
