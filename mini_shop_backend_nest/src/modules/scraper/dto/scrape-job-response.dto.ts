@@ -43,46 +43,11 @@ export class ScrapeJobResponseDto {
   public readonly targetCategory!: ScrapeJobTargetCategoryDto | null;
 
   @ApiPropertyOptional({
-    description: 'Requested manufacturer filter.',
-    example: 'Apple',
-    nullable: true,
-  })
-  public readonly manufacturer!: string | null;
-
-  @ApiPropertyOptional({
-    description: 'Requested product model filter.',
-    example: 'iPhone 15',
-    nullable: true,
-  })
-  public readonly model!: string | null;
-
-  @ApiPropertyOptional({
-    description: 'Requested description/text filter.',
-    example: 'smartphone iPhone 15 Pro Max',
-    nullable: true,
-  })
-  public readonly description!: string | null;
-
-  @ApiPropertyOptional({
     description: 'Generic search text.',
     example: 'iPhone',
     nullable: true,
   })
   public readonly searchText!: string | null;
-
-  @ApiPropertyOptional({
-    description: 'Minimum accepted product price.',
-    example: 1000,
-    nullable: true,
-  })
-  public readonly minPrice!: number | null;
-
-  @ApiPropertyOptional({
-    description: 'Maximum accepted product price.',
-    example: 50000,
-    nullable: true,
-  })
-  public readonly maxPrice!: number | null;
 
   @ApiProperty({
     description: 'Scraper job status.',

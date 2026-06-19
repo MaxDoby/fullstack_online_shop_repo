@@ -34,7 +34,7 @@ export class ScraperController {
   @ApiOperation({
     summary: 'Start a new scraper job.',
     description:
-      'Creates a scraper job and starts the scraping process asynchronously. The request defines the source website and optional filters such as product type, manufacturer, model, text search and price range.',
+      'Creates a scraper job and starts the scraping process asynchronously. The request defines the source website, internal target category and search query.',
   })
   @ApiBody({ type: StartScrapeJobDto })
   @ApiResponse({

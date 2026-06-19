@@ -52,7 +52,7 @@ Infrastructure:
 - Vercel for frontend deployment
 - Render for backend deployment
 - Render PostgreSQL for production database
-- Render RabbitMQ service for scraper queue
+- RabbitMQ-compatible queue service for scraper jobs
 - S3-compatible object storage for product images
 - Docker Compose for local full-stack infrastructure
 
@@ -169,10 +169,16 @@ cd mini_shop_frontend
 npm install
 ```
 
-Start local infrastructure and backend with Docker:
+Start local infrastructure only:
 
 ```bash
 docker compose up -d --build
+```
+
+Start local infrastructure together with the backend container:
+
+```bash
+docker compose --profile fullstack up -d --build
 ```
 
 Docker services:
@@ -238,15 +244,20 @@ The scraper is started from the admin panel or through `POST /scraper/jobs`.
 
 High-level flow:
 
-1. The admin creates a scraper job with website, product type, manufacturer, model, description, price filters, and limit.
+1. The admin creates a scraper job with source website, source base URL, internal target category, search query, and limit.
 2. The backend creates a job record in PostgreSQL.
 3. The job is published to RabbitMQ.
 4. The scraper consumer processes the job in the background.
-5. Parsed products are normalized and imported into the database.
-6. Product images are downloaded, validated, uploaded to storage, and attached to products.
-7. The job status is updated as completed or failed.
+5. The scraper discovers search result pages from the source website.
+6. Product links are extracted through the scraper pipeline.
+7. Parsed products are normalized into the internal product model.
+8. Products are imported into the admin-selected internal category.
+9. Product images are downloaded, validated, uploaded to storage, and attached to products.
+10. The job status is updated as completed or failed.
 
 This keeps long-running scraping work outside the normal HTTP request lifecycle.
+
+The scraper does not use saved source profiles. The current flow relies on a source URL and a search query provided by the admin, then applies the generic discovery/extraction pipeline.
 
 ## Image Flow
 
@@ -301,4 +312,3 @@ Production backend requires:
 - RabbitMQ service.
 - S3-compatible object storage.
 - Valid environment variables configured on Render.
-

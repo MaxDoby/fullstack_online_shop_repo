@@ -22,8 +22,8 @@ export class ScraperRepository extends BaseRepository<
         targetCategoryId: body.targetCategoryId,
         model: null,
         searchText: body.searchText,
-        minPrice: body.minPrice,
-        maxPrice: body.maxPrice,
+        minPrice: null,
+        maxPrice: null,
         status: ScrapeJobStatus.PENDING,
       },
       include: {

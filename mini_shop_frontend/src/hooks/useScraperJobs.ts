@@ -9,8 +9,6 @@ export interface ScraperJob {
     name: string;
   } | null;
   searchText: string | null;
-  minPrice: number | null;
-  maxPrice: number | null;
   status: 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED' | 'CANCELED';
   totalFound: number;
   totalImported: number;

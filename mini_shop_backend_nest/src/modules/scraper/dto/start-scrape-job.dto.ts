@@ -48,44 +48,6 @@ export class StartScrapeJobDto {
   public readonly searchText!: string;
 
   @ApiPropertyOptional({
-    description:
-      'Real search URL copied from the source website after a manual search. Used to auto-detect the search URL template.',
-    example: 'https://example-shop.com/search?query=iphone',
-  })
-  @IsOptional()
-  @IsUrl()
-  public readonly exampleSearchUrl?: string;
-
-  @ApiPropertyOptional({
-    description:
-      'The exact search term used when copying exampleSearchUrl. Example: if the copied URL was created after searching "iphone", pass "iphone".',
-    example: 'iphone',
-  })
-  @IsOptional()
-  @IsString()
-  public readonly exampleSearchTerm?: string;
-
-  @ApiPropertyOptional({
-    description: 'Minimum product price filter.',
-    example: 1111,
-  })
-  @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  @IsPositive()
-  public readonly minPrice?: number;
-
-  @ApiPropertyOptional({
-    description: 'Maximum product price filter.',
-    example: 9999,
-  })
-  @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  @IsPositive()
-  public readonly maxPrice?: number;
-
-  @ApiPropertyOptional({
     description: 'Maximum number of products to import in one job.',
     example: 50,
     minimum: 1,

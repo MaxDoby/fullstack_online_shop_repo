@@ -8,12 +8,7 @@ type ScrapeJobEntity = {
     id: number;
     name: string;
   } | null;
-  manufacturer: string | null;
-  model: string | null;
-  description: string | null;
   searchText: string | null;
-  minPrice: number | null;
-  maxPrice: number | null;
   status: string;
   totalFound: number;
   totalImported: number;
@@ -37,12 +32,7 @@ export class ScrapeJobMapper {
             name: job.targetCategory.name,
           }
         : null,
-      manufacturer: job.manufacturer,
-      model: job.model,
-      description: job.description,
       searchText: job.searchText,
-      minPrice: job.minPrice,
-      maxPrice: job.maxPrice,
       status: job.status,
       totalFound: job.totalFound,
       totalImported: job.totalImported,
