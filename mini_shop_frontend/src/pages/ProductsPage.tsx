@@ -10,7 +10,10 @@ interface ProductsPageProps {
     };
     productsView: {
         products: Product[];
+        cartItems: { id: number; quantity: number }[];
         addToCart: (product: Product) => void;
+        increaseCartItemQuantity: (productId: number) => void;
+        decreaseCartItemQuantity: (productId: number) => void;
         openProductImageGallery: (product: Product) => void;
     };
     pagination: {
@@ -39,7 +42,10 @@ const ProductsPage = ({ filters, productsView, pagination }: ProductsPageProps) 
 			<main className="content-area">
 				<ProductsOnPage
 					productsToShow={productsView.products}
+					cartItems={productsView.cartItems}
 					addToCart={productsView.addToCart}
+					increaseCartItemQuantity={productsView.increaseCartItemQuantity}
+					decreaseCartItemQuantity={productsView.decreaseCartItemQuantity}
 					openProductImageGallery={productsView.openProductImageGallery}
                 />
 

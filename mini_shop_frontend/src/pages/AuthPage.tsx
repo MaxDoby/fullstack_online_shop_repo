@@ -84,7 +84,7 @@ const AuthPage = ({
 						value={username}
 						onChange={(e) => setUsername(e.target.value)}
 						className="search-input"
-					/>
+                    />
 
 					<input
 						type="password"
@@ -92,22 +92,18 @@ const AuthPage = ({
 						value={password}
 						onChange={(e) => setPassword(e.target.value)}
 						className="search-input"
-					/>
+                    />
 
 					{errorMessage && <p className="auth-error">{errorMessage}</p>}
 
-					<button type="submit" className="btn-add" disabled={isSubmitting}>
+					<button type="submit" className="auth-submit-button" disabled={isSubmitting}>
 						{submitButtonText}
 					</button>
 				</form>
 
 				<p className="auth-helper-text">
 					Nu ai inca un cont?{' '}
-					<button
-						type="button"
-						className="auth-inline-button"
-						onClick={() => handleModeChange('register')}
-					>
+					<button type="button" className="auth-inline-button" onClick={() => handleModeChange('register')}>
 						Register
 					</button>
 				</p>
@@ -125,7 +121,7 @@ const AuthPage = ({
 						value={firstName}
 						onChange={(e) => setFirstName(e.target.value)}
 						className="search-input"
-					/>
+                    />
 
 					<input
 						type="text"
@@ -133,15 +129,9 @@ const AuthPage = ({
 						value={lastName}
 						onChange={(e) => setLastName(e.target.value)}
 						className="search-input"
-					/>
+                    />
 
-					<input
-						type="email"
-						placeholder="Email"
-						value={email}
-						onChange={(e) => setEmail(e.target.value)}
-						className="search-input"
-					/>
+					<input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} className="search-input" />
 
 					<input
 						type="text"
@@ -149,7 +139,7 @@ const AuthPage = ({
 						value={username}
 						onChange={(e) => setUsername(e.target.value)}
 						className="search-input"
-					/>
+                    />
 
 					<input
 						type="password"
@@ -157,22 +147,18 @@ const AuthPage = ({
 						value={password}
 						onChange={(e) => setPassword(e.target.value)}
 						className="search-input"
-					/>
+                    />
 
 					{errorMessage && <p className="auth-error">{errorMessage}</p>}
 
-					<button type="submit" className="btn-add" disabled={isSubmitting}>
+					<button type="submit" className="auth-submit-button" disabled={isSubmitting}>
 						{submitButtonText}
 					</button>
 				</form>
 
 				<p className="auth-helper-text">
 					Ai deja cont?{' '}
-					<button
-						type="button"
-						className="auth-inline-button"
-						onClick={() => handleModeChange('login')}
-					>
+					<button type="button" className="auth-inline-button" onClick={() => handleModeChange('login')}>
 						Login
 					</button>
 				</p>

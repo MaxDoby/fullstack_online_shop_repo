@@ -65,20 +65,11 @@ const AdminScraperPanel = ({
 				<h2>Scraper Jobs</h2>
 
 				<div className="admin-section-actions">
-					<button
-						type="button"
-						className="btn-filter"
-						onClick={loadScraperJobs}
-          >
+					<button type="button" className="btn-filter" onClick={loadScraperJobs}>
 						Refresh Jobs
 					</button>
 
-					<button
-						type="submit"
-						form="admin-scraper-form"
-						className="btn-filter admin-create-button"
-						disabled={isScraperJobLoading}
-          >
+					<button type="submit" form="admin-scraper-form" className="btn-filter admin-create-button" disabled={isScraperJobLoading}>
 						Start Scraper Job
 					</button>
 				</div>
@@ -87,11 +78,7 @@ const AdminScraperPanel = ({
 			{scraperJobsError && <p>{scraperJobsError}</p>}
 			{categoriesError && <p>{categoriesError}</p>}
 
-			<form
-				id="admin-scraper-form"
-				className="admin-scraper-form"
-				onSubmit={handleSubmitScraperJob}
-      >
+			<form id="admin-scraper-form" className="admin-scraper-form" onSubmit={handleSubmitScraperJob}>
 				<div className="admin-scraper-field">
 					<p className="admin-scraper-help-text">*de unde importam</p>
 					<input
@@ -100,34 +87,29 @@ const AdminScraperPanel = ({
 						onChange={handleInputChange}
 						placeholder="Sursa: ex: example-shop.com"
 						required
-          />
+                    />
 				</div>
 
-				<div className="admin-scraper-field">
+				<div className="admin-scraper-field admin-scraper-field-wide">
 					<p className="admin-scraper-help-text">*adresa sursei</p>
 					<input
 						name="sourceBaseUrl"
 						value={formData.sourceBaseUrl}
 						onChange={handleInputChange}
-						placeholder="URL sursa: ex: https://example-shop.com"
+						placeholder="https://example-shop.com"
 						required
-          />
+                    />
 				</div>
 
 				<div className="admin-scraper-field">
 					<p className="admin-scraper-help-text">*unde vom importa</p>
-					<select
-						name="targetCategoryId"
-						value={formData.targetCategoryId}
-						onChange={handleInputChange}
-						required
-          >
+					<select name="targetCategoryId" value={formData.targetCategoryId} onChange={handleInputChange} required>
 						<option value="">Alege categoria interna</option>
 						{categories.map((category) => (
 							<option key={category.id} value={category.id}>
 								{category.name}
 							</option>
-            ))}
+                        ))}
 					</select>
 				</div>
 
@@ -139,23 +121,14 @@ const AdminScraperPanel = ({
 						onChange={handleInputChange}
 						placeholder="Search query: ex: telefon samsung s21"
 						required
-          />
+                    />
 
-					<p className="admin-scraper-help-text">
-						*verifica manual intai pe sursa ca acest query returneaza produsele
-						dorite.
-					</p>
+					<p className="admin-scraper-help-text">*verifica manual intai pe sursa ca acest query returneaza produsele dorite.</p>
 				</div>
 
 				<div className="admin-scraper-field">
 					<p className="admin-scraper-help-text">*cate produse importam</p>
-					<input
-						name="limit"
-						type="number"
-						value={formData.limit}
-						onChange={handleInputChange}
-						placeholder="Limita produse: ex: 10"
-          />
+					<input name="limit" type="number" value={formData.limit} onChange={handleInputChange} placeholder="Limita produse: ex: 10" />
 				</div>
 			</form>
 
@@ -167,12 +140,8 @@ const AdminScraperPanel = ({
 							<th>Source</th>
 							<th>Category</th>
 							<th>Status</th>
-							<th>Found</th>
-							<th>Imported</th>
-							<th>Updated</th>
-							<th>Failed</th>
-							<th>Created</th>
-							<th>Finished</th>
+							<th>Rezultat</th>
+							<th>Timp</th>
 							<th>Error</th>
 							<th>Actions</th>
 						</tr>
@@ -185,43 +154,40 @@ const AdminScraperPanel = ({
 								<td>{job.sourceWebsite}</td>
 								<td>{job.targetCategory?.name ?? '-'}</td>
 								<td>{job.status}</td>
-								<td>{job.totalFound}</td>
-								<td>{job.totalImported}</td>
-								<td>{job.totalUpdated}</td>
-								<td>{job.totalFailed}</td>
-								<td>{new Date(job.createdAt).toLocaleString()}</td>
-								<td>
-									{job.finishedAt
-                    ? new Date(job.finishedAt).toLocaleString()
-                    : '-'}
+								<td className="admin-scraper-stats-cell">
+									<span><strong>Found:</strong> {job.totalFound}</span>
+									<span><strong>Imported:</strong> {job.totalImported}</span>
+									<span><strong>Updated:</strong> {job.totalUpdated}</span>
+									<span><strong>Failed:</strong> {job.totalFailed}</span>
 								</td>
-								<td
-									className="admin-scraper-error-cell"
-									title={job.errorMessage ?? undefined}
-                >
+								<td className="admin-scraper-time-cell">
+									<span><strong>Created:</strong> {new Date(job.createdAt).toLocaleString()}</span>
+									<span>
+										<strong>Finished:</strong>
+										{' '}
+										{job.finishedAt ? new Date(job.finishedAt).toLocaleString() : '-'}
+									</span>
+								</td>
+								<td className="admin-scraper-error-cell" title={job.errorMessage ?? undefined}>
 									{job.errorMessage ?? '-'}
 								</td>
 								<td className="admin-scraper-actions-cell">
 									{job.status === 'COMPLETED' && (
-									<button
-										type="button"
-										className="btn-filter admin-scraper-action-button"
-										onClick={onProductsChanged}
-                    >
+									<button type="button" className="btn-filter admin-scraper-action-button" onClick={onProductsChanged}>
 										Reload Products
 									</button>
-                  )}
+                                    )}
 
 									<button
 										type="button"
 										className="btn-filter admin-scraper-action-button admin-scraper-delete-button"
 										onClick={() => deleteScraperJob(job.id)}
-                  >
+                                    >
 										Delete
 									</button>
 								</td>
 							</tr>
-            ))}
+                        ))}
 					</tbody>
 				</table>
 			</div>

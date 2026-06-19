@@ -24,7 +24,7 @@ export class ProductsService {
     const page = query.page ?? 1;
     const limit = query.limit ?? 16;
     const sortBy = query.sortBy ?? 'id';
-    const sortOrder = query.sortOrder ?? 'asc';
+    const sortOrder = query.sortOrder ?? 'desc';
     const skip = (page - 1) * limit;
     const { search, category } = query;
     const where: Prisma.ProductWhereInput = {

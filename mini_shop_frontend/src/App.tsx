@@ -1,7 +1,7 @@
 import './App.css';
 
 import {
-	Navigate, Routes, Route, useNavigate,
+	Navigate, Routes, Route, useNavigate, useLocation,
 } from 'react-router-dom';
 import AuthPage from './pages/AuthPage.tsx';
 import useAuth from './hooks/useAuth.ts';
@@ -21,6 +21,9 @@ import logicFilterProducts from './utils/productFilters.ts';
 
 const App = () => {
 	const navigate = useNavigate();
+
+	const location = useLocation();
+	const isAdminPage = location.pathname === '/admin';
 
 	const productsState = useProducts();
 	const authState = useAuth();
@@ -114,7 +117,10 @@ const App = () => {
 
 	const productsPageView = {
 		products,
+		cartItems,
 		addToCart,
+		increaseCartItemQuantity,
+		decreaseCartItemQuantity,
 		openProductImageGallery,
 	};
 
@@ -153,17 +159,12 @@ const App = () => {
 
 			<NewsTicker />
 
-			<SearchCont searchQuery={searchQuery} setSearchQuery={setSearchQuery} setCurrentPage={setCurrentPage} />
+			{!isAdminPage && <SearchCont searchQuery={searchQuery} setSearchQuery={setSearchQuery} setCurrentPage={setCurrentPage} />}
 
 			<Routes>
 				<Route
 					path="/products"
-					element={(
-						<ProductsPage
-							filters={productsPageFilters}
-							productsView={productsPageView}
-							pagination={productsPagePagination} />
-   )}
+					element={<ProductsPage filters={productsPageFilters} productsView={productsPageView} pagination={productsPagePagination} />}
                 />
 				<Route
 					path="/cart"
