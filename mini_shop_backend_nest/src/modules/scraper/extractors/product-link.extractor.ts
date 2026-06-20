@@ -65,11 +65,10 @@ export class ProductLinkExtractor {
     const matchedQueryTokens = queryTokens.filter((queryToken) =>
       primaryTokens.some((token) => this.tokenMatches(token, queryToken)),
     ).length;
-    const requiredQueryMatches = Math.min(queryTokens.length, 2);
     const hasProductTextSignal = directTextTokens.length >= 3;
     const hasPriceSignal = /\d[\d\s.,]*(lei|mdl|ron|eur)/i.test(cardText);
 
-    if (matchedQueryTokens < requiredQueryMatches) return 0;
+    if (!this.hasRequiredQueryMatch(primaryTokens, queryTokens)) return 0;
 
     let score = 0;
 
@@ -147,6 +146,30 @@ export class ProductLinkExtractor {
       valueToken === expectedToken ||
       (expectedToken.length >= 5 && valueToken.startsWith(expectedToken))
     );
+  }
+
+  private hasRequiredQueryMatch(
+    productTokens: string[],
+    queryTokens: string[],
+  ): boolean {
+    if (queryTokens.length === 0) return true;
+
+    if (queryTokens.length === 2) {
+      const [, specificQueryToken] = queryTokens;
+
+      return productTokens.some((productToken) =>
+        this.tokenMatches(productToken, specificQueryToken),
+      );
+    }
+
+    const matchedQueryTokens = queryTokens.filter((queryToken) =>
+      productTokens.some((productToken) =>
+        this.tokenMatches(productToken, queryToken),
+      ),
+    ).length;
+    const requiredMatchesCount = queryTokens.length >= 3 ? 2 : 1;
+
+    return matchedQueryTokens >= requiredMatchesCount;
   }
 
   private isInternalUrl(url: string, baseUrl: string): boolean {

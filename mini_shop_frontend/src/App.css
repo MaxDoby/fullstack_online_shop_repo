@@ -255,9 +255,10 @@ input {
 }
 
 .product-card:hover {
-	transform: translateY(-5px);
-	border-color: rgba(236, 121, 107, 0.72);
-	box-shadow: 0 18px 38px rgba(0, 0, 0, 0.28);
+	border-color: rgba(255, 255, 255, 0.1);
+	box-shadow:
+		18px 0 28px -18px rgba(236, 121, 107, 0.3),
+		0 28px 34px -20px rgba(236, 121, 107, 0.54);
 }
 
 .card-glass {
@@ -268,17 +269,12 @@ input {
 }
 
 .product-card h3 {
-	min-height: 75px;
-	margin: 0;
-	font-size: 20px;
-	line-height: 1.25;
-	color: #f3edf4;
-	position: relative;
-	z-index: 2;
-	display: -webkit-box;
-	overflow: hidden;
-	-webkit-line-clamp: 3;
-	-webkit-box-orient: vertical;
+	min-height: 52px;
+	font-size: 18px;
+	font-weight: 500;
+	line-height: 1.18;
+	color: #f4eef2;
+	-webkit-line-clamp: 2;
 }
 
 .product-card p {
@@ -315,6 +311,11 @@ input {
 	width: 100%;
 	height: 100%;
 	object-fit: contain;
+	transition: transform 0.22s ease;
+}
+
+.product-card:hover .product-image-button img {
+	transform: scale(1.14);
 }
 
 .product-card img {
@@ -337,7 +338,7 @@ input {
 }
 
 .price {
-	color: var(--apricot);
+	color: #ffffff;
 	font-weight: 800;
 }
 
@@ -345,46 +346,6 @@ input {
 	display: flex;
 	align-items: center;
 	gap: 8px;
-}
-
-.product-quantity-control {
-	display: inline-flex;
-	align-items: center;
-	height: 38px;
-	overflow: hidden;
-	border: 1px solid rgba(232, 232, 247, 0.12);
-	border-radius: 999px;
-	background: rgba(232, 232, 247, 0.055);
-}
-
-.product-quantity-button {
-	display: grid;
-	place-items: center;
-	width: 30px;
-	height: 100%;
-	padding: 0;
-	border: 0;
-	background: transparent;
-	color: #f3edf4;
-	font-weight: 800;
-	cursor: pointer;
-}
-
-.product-quantity-button:hover:not(:disabled) {
-	background: rgba(236, 121, 107, 0.18);
-	color: white;
-}
-
-.product-quantity-button:disabled {
-	opacity: 0.35;
-	cursor: not-allowed;
-}
-
-.product-quantity-value {
-	min-width: 28px;
-	color: rgba(243, 237, 244, 0.9);
-	font-weight: 800;
-	text-align: center;
 }
 
 /* =========================================
@@ -424,39 +385,30 @@ input {
 }
 
 .btn-add-cart {
-	border-color: rgba(236, 121, 107, 0.26);
-	background: rgba(236, 121, 107, 0.12);
+	border-color: rgba(236, 121, 107, 0.72);
+	background: var(--apricot);
+	box-shadow: 0 10px 24px rgba(236, 121, 107, 0.22);
 }
 
 .btn-add-cart:hover {
-	background: rgba(236, 121, 107, 0.28);
-	border-color: rgba(236, 121, 107, 0.68);
+	background: #ff9589;
+	border-color: rgba(255, 255, 255, 0.5);
 }
 
 .cart-button-icon {
-	position: relative;
 	display: block;
-	width: 18px;
-	height: 13px;
-	border: 2px solid #f3edf4;
-	border-top: 0;
-	border-radius: 2px 2px 4px 4px;
-	box-shadow:
-		2px 14px 0 -1px #f3edf4,
-		13px 14px 0 -1px #f3edf4;
-	transform: skewX(-8deg) translateY(-4px);
+	width: 28px;
+	height: 28px;
+	fill: none;
+	stroke: #20151b;
+	stroke-width: 2.4;
+	stroke-linecap: round;
+	stroke-linejoin: round;
 }
 
-.cart-button-icon::before {
-	content: "";
-	position: absolute;
-	top: -6px;
-	left: -5px;
-	width: 8px;
-	height: 2px;
-	background: #f3edf4;
-	border-radius: 999px;
-	transform: rotate(24deg);
+.cart-button-wheel {
+	fill: #20151b;
+	stroke: none;
 }
 
 .filter-nav {

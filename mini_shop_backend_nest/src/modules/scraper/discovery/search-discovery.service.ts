@@ -30,16 +30,16 @@ export class SearchDiscoveryService {
       const $ = cheerio.load(homepageHtml);
       const formSearchUrl = this.findSearchFormUrl($, baseUrl, query);
       const urls = [
-        browserDiscoveredUrl,
         formSearchUrl,
         ...configuredUrls,
+        browserDiscoveredUrl,
       ].filter((url): url is string => Boolean(url));
 
       return [...new Set(urls)];
     } catch {
       return [
         ...new Set(
-          [browserDiscoveredUrl, ...configuredUrls].filter(
+          [...configuredUrls, browserDiscoveredUrl].filter(
             (url): url is string => Boolean(url),
           ),
         ),

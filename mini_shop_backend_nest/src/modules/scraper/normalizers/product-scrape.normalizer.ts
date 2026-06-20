@@ -8,10 +8,14 @@ export class ProductScrapeNormalizer {
   public normalize(rawProduct: RawScrapedProduct): NormalizedProduct {
     const imageUrls = rawProduct.imageUrls ?? [];
     const thumbnail = imageUrls[0] ?? '';
+    const normalizedTitle = this.normalizeTitleAndDescription(
+      rawProduct.title,
+      rawProduct.description,
+    );
 
     return {
-      title: rawProduct.title.trim(),
-      description: rawProduct.description?.trim() ?? rawProduct.title.trim(),
+      title: normalizedTitle.title,
+      description: normalizedTitle.description,
       price:
         rawProduct.price ?? parsePriceText(rawProduct.priceText ?? '') ?? 0,
       stock: 0,
@@ -29,6 +33,33 @@ export class ProductScrapeNormalizer {
       })),
       variants: rawProduct.variants ?? [],
       specificationGroups: rawProduct.specificationGroups ?? [],
+    };
+  }
+
+  private normalizeTitleAndDescription(
+    rawTitle: string,
+    rawDescription?: string,
+  ): { title: string; description: string } {
+    const title = rawTitle.trim();
+    const description = rawDescription?.trim();
+    const titleParts = title
+      .split('|')
+      .map((part) => part.trim())
+      .filter(Boolean);
+
+    if (titleParts.length < 2) {
+      return {
+        title,
+        description: description ?? title,
+      };
+    }
+
+    const firstTitlePart = titleParts[0];
+    const specs = titleParts.slice(1).join(' | ');
+
+    return {
+      title: firstTitlePart,
+      description: specs || description || firstTitlePart,
     };
   }
 }

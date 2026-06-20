@@ -1,6 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import type { StartScrapeJobDto } from '../dto/start-scrape-job.dto';
 import type { RawScrapedProduct } from '../interfaces/raw-scraped-product.interface';
+import {
+  hasProductPathSignal,
+  toSearchTokens,
+} from '../utils/scraper-common.utils';
+
+const minimumProductImagesCount = 3;
 
 @Injectable()
 export class ProductValidationPipeline {
@@ -8,11 +14,11 @@ export class ProductValidationPipeline {
     product: RawScrapedProduct,
     params: StartScrapeJobDto,
   ): boolean {
-    void params;
-
     return (
       this.hasUsableTitle(product) &&
       this.hasUsableImages(product) &&
+      this.matchesSearchText(product, params.searchText) &&
+      this.hasProductSourceUrl(product.sourceUrl) &&
       !this.hasBlockedNonProductTitle(product.title) &&
       !this.isBlockedNonProductUrl(product.sourceUrl)
     );
@@ -23,7 +29,53 @@ export class ProductValidationPipeline {
   }
 
   private hasUsableImages(product: RawScrapedProduct): boolean {
-    return (product.imageUrls ?? []).length > 0;
+    return (product.imageUrls ?? []).length >= minimumProductImagesCount;
+  }
+
+  private matchesSearchText(
+    product: RawScrapedProduct,
+    searchText: string,
+  ): boolean {
+    const queryTokens = toSearchTokens(searchText).filter(
+      (token) => token.length >= 3,
+    );
+
+    if (queryTokens.length === 0) return true;
+
+    const productTokens = toSearchTokens(
+      [
+        product.title,
+        product.description,
+        product.sourceUrl,
+        product.categoryPath?.join(' '),
+      ]
+        .filter(Boolean)
+        .join(' '),
+    );
+
+    const matchedTokensCount = queryTokens.filter((queryToken) =>
+      productTokens.some((productToken) => productToken.includes(queryToken)),
+    ).length;
+
+    if (queryTokens.length === 2) {
+      const [, specificQueryToken] = queryTokens;
+
+      return productTokens.some((productToken) =>
+        productToken.includes(specificQueryToken),
+      );
+    }
+
+    const requiredMatchesCount = queryTokens.length >= 3 ? 2 : 1;
+
+    return matchedTokensCount >= requiredMatchesCount;
+  }
+
+  private hasProductSourceUrl(sourceUrl: string): boolean {
+    try {
+      return hasProductPathSignal(new URL(sourceUrl).pathname);
+    } catch {
+      return false;
+    }
   }
 
   private hasBlockedNonProductTitle(title: string): boolean {
