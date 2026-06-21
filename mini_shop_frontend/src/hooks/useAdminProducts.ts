@@ -147,6 +147,25 @@ const useAdminProducts = () => {
 		return updatedProduct;
 	};
 
+	const moveAdminProductToCategory = async (product: AdminProduct, categoryName: string, accessToken: string) => {
+		if (product.category.name === categoryName) return product;
+
+		const updatedProduct = await updateAdminProduct(
+			product.id,
+			{
+				title: product.title,
+				description: product.description,
+				price: product.price,
+				stock: product.stock,
+				category: categoryName,
+				thumbnail: product.thumbnail,
+			},
+			accessToken,
+		);
+
+		return updatedProduct;
+	};
+
 	const loadProductImages = async (productId: number | null) => {
 		if (productId === null) {
 			setSelectedProductIdForImages(null);
@@ -208,6 +227,7 @@ const useAdminProducts = () => {
 		setAdminProductsPage,
 		reloadAdminProducts,
 		loadProductImages,
+		moveAdminProductToCategory,
 		deleteAdminProductImage,
 		setPrimaryProductImage,
 	};

@@ -6,6 +6,7 @@ import {
 } from 'react';
 import useAdminProducts from '../hooks/useAdminProducts';
 import useAdminProductForm from '../hooks/useAdminProductForm';
+import useAdminCategories from '../hooks/useAdminCategories';
 import AdminScraperPanel from '../components/AdminScraperPanel';
 
 interface AdminPageProps {
@@ -24,16 +25,29 @@ const AdminPage = ({ accessToken, onProductsChanged }: AdminPageProps) => {
 	const [selectedProductIds, setSelectedProductIds] = useState<number[]>([]);
 	const {
 		adminProducts,
-		adminProductsError, deleteAdminProduct, createAdminProduct, uploadAdminProductImage, updateAdminProduct,
-		selectedProductIdForImages, selectedProductImages, loadProductImages,
-		deleteAdminProductImage, setPrimaryProductImage,
-		adminProductsPage, adminProductsTotalPages, setAdminProductsPage, reloadAdminProducts,
+		adminProductsError,
+		deleteAdminProduct,
+		createAdminProduct,
+		uploadAdminProductImage,
+		updateAdminProduct,
+		selectedProductIdForImages,
+		selectedProductImages,
+		loadProductImages,
+		deleteAdminProductImage,
+		setPrimaryProductImage,
+		adminProductsPage,
+		adminProductsTotalPages,
+		setAdminProductsPage,
+		reloadAdminProducts,
+		moveAdminProductToCategory,
 	} = useAdminProducts();
 
 	const {
 		formData,
 		handleInputChange, resetForm, getCreateProductPayload, handleFileChange, editingProductId, startEditingProduct,
 	} = useAdminProductForm();
+
+	const { categories } = useAdminCategories();
 
 	const handleProductsChanged = () => {
 		reloadAdminProducts();
@@ -128,6 +142,25 @@ const AdminPage = ({ accessToken, onProductsChanged }: AdminPageProps) => {
 		handleProductsChanged();
 		setAdminActionSuccess('Product updated.');
 		resetForm();
+	};
+
+	const handleMoveProductCategory = async (productId: number, categoryName: string) => {
+		if (!accessToken) return;
+
+		const product = adminProducts.find((currentProduct) => currentProduct.id === productId);
+
+		if (!product) return;
+
+		setAdminActionError(null);
+		setAdminActionSuccess(null);
+
+		try {
+			await moveAdminProductToCategory(product, categoryName, accessToken);
+			handleProductsChanged();
+			setAdminActionSuccess('Product category updated.');
+		} catch (error) {
+			setAdminActionError(error instanceof Error ? error.message : 'Product category update failed.');
+		}
 	};
 
 	const handleSubmitProductForm = async (event: SubmitEvent<HTMLFormElement>) => {
@@ -290,7 +323,19 @@ const AdminPage = ({ accessToken, onProductsChanged }: AdminPageProps) => {
 									</td>
 									<td>{product.id}</td>
 									<td>{product.title}</td>
-									<td>{product.category.name}</td>
+									<td>
+										<select
+											className="admin-category-select"
+											value={product.category.name}
+											onChange={(event) => handleMoveProductCategory(product.id, event.target.value)}
+                                        >
+											{categories.map((category) => (
+												<option key={category.id} value={category.name}>
+													{category.name}
+												</option>
+                                            ))}
+										</select>
+									</td>
 									<td>{product.price}</td>
 									<td>{product.stock}</td>
 									<td>

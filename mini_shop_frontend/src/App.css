@@ -1458,3 +1458,27 @@ input {
 	align-items: center;
 	gap: 10px;
 }
+
+.admin-category-select {
+	width: 130px;
+	height: 32px;
+	padding: 0 10px;
+	border: 1px solid rgba(255, 255, 255, 0.14);
+	border-radius: 8px;
+	background: rgba(255, 255, 255, 0.06);
+	color: #ff8a76;
+	font-size: 14px;
+	cursor: pointer;
+}
+
+.admin-category-select:focus {
+	outline: none;
+	border-color: #ff8a76;
+	box-shadow: 0 0 0 2px rgba(255, 138, 118, 0.18);
+}
+
+.admin-category-select option {
+	background: #1c1a20;
+	color: #f5f3f0;
+}
+
