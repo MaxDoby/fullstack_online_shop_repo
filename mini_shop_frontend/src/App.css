@@ -604,7 +604,7 @@ input {
 
 @media (max-width: 768px) {
 	.app-container {
-		padding-top: 156px;
+		padding-top: 104px;
 	}
 
 	.main-layout {
@@ -631,10 +631,48 @@ input {
 	}
 
 	.header {
-		flex-direction: column;
+		display: grid;
+		grid-template-columns: 1fr auto;
+		grid-template-areas:
+			"logo cart"
+			"actions actions";
+		gap: 10px;
+		align-items: center;
+		padding: 12px 14px;
 		text-align: center;
-		padding-right: 12px;
-		padding-left: 12px;
+	}
+
+	.logo-link {
+		grid-area: logo;
+		justify-self: start;
+	}
+
+	.logo {
+		font-size: 22px;
+	}
+
+	.cart-indicator {
+		grid-area: cart;
+		justify-self: end;
+		padding: 8px 12px;
+		font-size: 15px;
+	}
+
+	.auth-indicator {
+		grid-area: actions;
+		display: flex;
+		justify-content: center;
+		gap: 10px;
+		width: 100%;
+	}
+
+	.auth-indicator .btn-filter {
+		padding: 8px 14px;
+		font-size: 14px;
+	}
+
+	.news-ticker-container {
+		padding: 7px 0;
 	}
 
 	.search-container,
